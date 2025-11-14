@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ThemeToggle } from "./components/ThemeToggle";
+import ReactMarkdown from "react-markdown";
 
 // Enhanced regex to match common placeholder patterns:
 // - [Company Name], $[Amount], {variable}
@@ -157,8 +158,11 @@ export default function Home() {
   const generateQuestion = useCallback(async (placeholder: string): Promise<string> => {
     // Check cache first
     if (questionCache[placeholder]) {
+      console.log(`Using cached question for: ${placeholder}`);
       return questionCache[placeholder];
     }
+    
+    console.log(`Cache miss for: ${placeholder}, generating individually...`);
     
     // Fallback to individual generation if not in cache
     try {
@@ -233,6 +237,8 @@ export default function Home() {
           
           // Wait for questions to be generated
           const generatedQuestions = await questionsPromise;
+          console.log("Generated questions cache:", generatedQuestions);
+          console.log("Cache keys:", Object.keys(generatedQuestions));
           setQuestionCache(generatedQuestions);
           
           // Show typing indicator again, then first question
@@ -260,7 +266,7 @@ export default function Home() {
           setMessages([
             {
               role: "assistant",
-              content: "⚠️ No placeholders detected in this document.\n\nFor best results, format placeholders like:\n• [Company Name]\n• $[Amount]\n• {variable}\n• ___ (3+ underscores)\n• [ ] (empty brackets)\n\nYou can:\n1. Upload a different document with placeholders\n2. Download this document as-is\n3. Edit your document to add placeholders and re-upload",
+              content: "⚠️ No placeholders detected in this document.\n\n📝 For best results, format placeholders like:\n\n• [Company Name]\n• $[Amount]\n• {variable}\n• ___ (3+ underscores)\n• [ ] (empty brackets)\n\n💡 What you can do:\n\n1. Upload a different document with placeholders\n2. Download this document as-is\n3. Edit your document to add placeholders and re-upload",
             },
           ]);
           setIsTyping(false);
@@ -911,7 +917,20 @@ export default function Home() {
                         color: message.role === "user" ? "var(--md-sys-color-on-primary)" : "var(--md-sys-color-on-surface)"
                       }}
                     >
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                        <ReactMarkdown
+                          components={{
+                            p: ({node, ...props}) => <p className="my-1" {...props} />,
+                            ul: ({node, ...props}) => <ul className="my-1 space-y-0.5" {...props} />,
+                            li: ({node, ...props}) => <li className="my-0" {...props} />,
+                            h1: ({node, ...props}) => <h1 className="text-base font-semibold mt-2 mb-1" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="text-sm font-semibold mt-2 mb-1" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-sm font-medium mt-1 mb-0.5" {...props} />,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 ))}
