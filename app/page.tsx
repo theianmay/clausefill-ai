@@ -98,9 +98,26 @@ export default function Home() {
     // Check if this is a date field
     if (/date|day|effective/i.test(lowerPlaceholder)) {
       const lowerValue = trimmedValue.toLowerCase();
+      const today = new Date();
+      
       if (lowerValue === 'today') {
-        const today = new Date();
         return today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'tomorrow') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'next week') {
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        return nextWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'last week') {
+        const lastWeek = new Date(today);
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        return lastWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
       }
     }
     
@@ -112,6 +129,46 @@ export default function Home() {
         // Format as currency
         return '$' + Number(numericValue).toLocaleString('en-US');
       }
+    }
+    
+    // Check if this is a company name field - normalize business entity suffixes
+    if (/company|corporation|corp|business|entity|organization|employer/i.test(lowerPlaceholder)) {
+      // Business entity suffix mappings (case-insensitive match, proper case output)
+      const entityMap: Record<string, string> = {
+        'llc': 'LLC',
+        'l.l.c.': 'LLC',
+        'l.l.c': 'LLC',
+        'inc': 'Inc.',
+        'inc.': 'Inc.',
+        'incorporated': 'Inc.',
+        'corp': 'Corp.',
+        'corp.': 'Corp.',
+        'corporation': 'Corporation',
+        'ltd': 'Ltd.',
+        'ltd.': 'Ltd.',
+        'limited': 'Limited',
+        'co': 'Co.',
+        'co.': 'Co.',
+        'company': 'Company',
+        'lp': 'LP',
+        'l.p.': 'LP',
+        'llp': 'LLP',
+        'l.l.p.': 'LLP',
+        'pllc': 'PLLC',
+        'p.l.l.c.': 'PLLC',
+        'pc': 'PC',
+        'p.c.': 'PC'
+      };
+      
+      // Replace entity suffixes with proper formatting
+      let normalized = trimmedValue;
+      Object.entries(entityMap).forEach(([pattern, replacement]) => {
+        // Match the pattern at the end of the string (case-insensitive)
+        const regex = new RegExp(`\\b${pattern.replace(/\./g, '\\.')}\\b$`, 'i');
+        normalized = normalized.replace(regex, replacement);
+      });
+      
+      return normalized;
     }
     
     return trimmedValue;
