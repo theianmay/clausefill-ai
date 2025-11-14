@@ -1,65 +1,326 @@
-import Image from "next/image";
+"use client";
+
+import { useCallback, useMemo, useRef, useState } from "react";
+
+const PLACEHOLDER_REGEX = /\$?\[[^\]]+\]|\{[^}]+\}/g;
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
+const sampleTemplateText = `SAFE Agreement
+
+This SAFE agreement (the "Agreement") is made on [Date of Safe] between [Company Name], a Delaware corporation (the "Company"), and [Investor Name] (the "Investor").
+
+The Investor agrees to invest $[Investment Amount] in exchange for the right to certain shares representing {equity_percent} of the Company.
+
+The Company will use the funds to pursue its business plan in the [Company Focus Area].`;
+
+const sampleTemplateHtml = `
+  <h2>Sample SAFE Agreement</h2>
+  <p>
+    This SAFE agreement (the <em>"Agreement"</em>) is made on <strong>[Date of Safe]</strong>
+    between <strong>[Company Name]</strong>, a Delaware corporation (the
+    <em>"Company"</em>), and <strong>[Investor Name]</strong> (the <em>"Investor"</em>).
+  </p>
+  <p>
+    The Investor agrees to invest <strong>$[Investment Amount]</strong> in exchange for
+    the right to certain shares representing <strong>{equity_percent}</strong> of the Company.
+  </p>
+  <p>
+    The Company will use the funds to pursue its business plan in the
+    <strong>[Company Focus Area]</strong>.
+  </p>
+`;
+
+const formatBytes = (value: number) => {
+  if (!value) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(units.length - 1, Math.floor(Math.log(value) / Math.log(1024)));
+  return `${(value / Math.pow(1024, index)).toFixed(1)} ${units[index]}`;
+};
 
 export default function Home() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [templateHtml, setTemplateHtml] = useState("");
+  const [templateText, setTemplateText] = useState("");
+  const [placeholders, setPlaceholders] = useState<string[]>([]);
+  const [documentMeta, setDocumentMeta] = useState<{ name: string; size: string } | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+
+  const placeholderBadge = useMemo(() => {
+    if (!placeholders.length) return "No placeholders detected yet";
+    return `${placeholders.length} placeholder${placeholders.length === 1 ? "" : "s"}`;
+  }, [placeholders.length]);
+
+  const extractPlaceholders = useCallback((text: string) => {
+    const matches = text.match(PLACEHOLDER_REGEX) ?? [];
+    return Array.from(new Set(matches.map((match) => match.trim())));
+  }, []);
+
+  const handleParsedDocument = useCallback(
+    (name: string, html: string, text: string) => {
+      setTemplateHtml(html);
+      setTemplateText(text);
+      setPlaceholders(extractPlaceholders(text));
+      setDocumentMeta({ name, size: formatBytes(text.length * 2) });
+      setLastUpdated(new Date().toLocaleTimeString());
+    },
+    [extractPlaceholders],
+  );
+
+  const parseDocument = useCallback(
+    async (file: File) => {
+      setIsParsing(true);
+      setUploadError(null);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("/api/parse-document", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "Unable to parse document");
+        }
+
+        handleParsedDocument(file.name, data.templateHtml ?? "", data.templateText ?? "");
+      } catch (error) {
+        console.error(error);
+        setUploadError(error instanceof Error ? error.message : "Unexpected error");
+      } finally {
+        setIsParsing(false);
+      }
+    },
+    [handleParsedDocument],
+  );
+
+  const handleFile = useCallback(
+    (file?: File) => {
+      if (!file) return;
+
+      const isDocx =
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        file.name.toLowerCase().endsWith(".docx");
+
+      if (!isDocx) {
+        setUploadError("Only .docx files are supported");
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        setUploadError("File is too large (max 5 MB)");
+        return;
+      }
+
+      setDocumentMeta({ name: file.name, size: formatBytes(file.size) });
+      void parseDocument(file);
+    },
+    [parseDocument],
+  );
+
+  const handleInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      handleFile(file);
+    },
+    [handleFile],
+  );
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLLabelElement>) => {
+      event.preventDefault();
+      setIsDragActive(false);
+      const file = event.dataTransfer.files?.[0];
+      handleFile(file);
+    },
+    [handleFile],
+  );
+
+  const applySampleDocument = useCallback(() => {
+    handleParsedDocument("Sample SAFE Template.docx", sampleTemplateHtml, sampleTemplateText);
+    setUploadError(null);
+  }, [handleParsedDocument]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen bg-slate-50 py-12 text-slate-900">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6">
+        <header className="space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <span>Project status</span>
+            <span className="text-emerald-600">Phase 1: Upload &amp; Parse</span>
+          </div>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h1 className="text-4xl font-semibold tracking-tight text-slate-900">Clausefill-AI</h1>
+              <p className="mt-2 max-w-3xl text-base text-slate-600">
+                Upload a legal template (.docx), parse it server-side with mammoth, and preview the
+                rendered document. Placeholders are automatically detected and listed.
+              </p>
+            </div>
+            {documentMeta && (
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                <p className="font-medium text-slate-900">Current document</p>
+                <p>{documentMeta.name}</p>
+                <p className="text-xs text-slate-500">Updated {lastUpdated || "just now"}</p>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,360px),1fr]">
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Document uploader
+              </p>
+              <label
+                htmlFor="document-upload"
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setIsDragActive(true);
+                }}
+                onDragLeave={() => setIsDragActive(false)}
+                onDrop={handleDrop}
+                className={`mt-4 flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 text-center transition
+                  ${
+                    isDragActive
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                      : "border-slate-200 bg-slate-50 text-slate-500"
+                  }
+                `}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  className="mb-4 h-12 w-12"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+                  />
+                </svg>
+                <p className="text-base font-medium text-slate-900">Drag &amp; drop your .docx</p>
+                <p className="text-sm text-slate-500">or click to choose a file up to 5&nbsp;MB</p>
+                <input
+                  ref={fileInputRef}
+                  id="document-upload"
+                  type="file"
+                  accept=".docx"
+                  className="sr-only"
+                  onChange={handleInputChange}
+                />
+              </label>
+              <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
+                <p>Supported format: .docx (Word)</p>
+                <button
+                  type="button"
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Browse files
+                </button>
+              </div>
+              {uploadError && (
+                <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {uploadError}
+                </p>
+              )}
+              {isParsing && (
+                <p className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+                  Parsing document…
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Quick start
+              </p>
+              <p className="mt-2 text-sm text-slate-600">No .docx handy? Load a ready-made SAFE sample.</p>
+              <button
+                type="button"
+                onClick={applySampleDocument}
+                className="mt-4 w-full rounded-2xl border border-indigo-200 bg-indigo-50 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+              >
+                Use sample document
+              </button>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Parse summary
+              </p>
+              <dl className="mt-4 space-y-3 text-sm text-slate-600">
+                <div className="flex items-center justify-between">
+                  <dt>Document</dt>
+                  <dd className="font-medium text-slate-900">{documentMeta?.name ?? "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt>Size</dt>
+                  <dd className="font-medium text-slate-900">{documentMeta?.size ?? "—"}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt>Placeholders</dt>
+                  <dd className="font-medium text-slate-900">{placeholderBadge}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Detected placeholders
+              </p>
+              <div className="mt-3 space-y-2 text-sm text-slate-700">
+                {placeholders.length ? (
+                  <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50">
+                    {placeholders.map((placeholder) => (
+                      <li key={placeholder} className="flex items-center justify-between px-4 py-2">
+                        <span className="font-mono text-xs text-slate-500">{placeholder}</span>
+                        <span className="text-emerald-600">Pending</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-slate-500">Placeholder keys will appear after parsing.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  Document preview
+                </p>
+                <p className="text-sm text-slate-500">Rendered directly from the parsed HTML</p>
+              </div>
+              {templateText && (
+                <p className="text-xs text-slate-400">{templateText.split(" ").length} words</p>
+              )}
+            </div>
+            <div className="mt-6 h-[560px] overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50 p-6 text-base leading-relaxed text-slate-800">
+              {templateHtml ? (
+                <article className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: templateHtml }} />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center text-center text-slate-400">
+                  <p className="text-base font-medium">Upload a document to see it here</p>
+                  <p className="mt-2 text-sm">Your parsed, scrollable preview will appear in this panel.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

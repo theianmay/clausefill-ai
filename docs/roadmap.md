@@ -14,15 +14,15 @@ This roadmap is focused on **execution** and is meant to be extended as the proj
 
 ## Phase 1 – Upload & Parse Document
 
-- [ ] Build upload UI:
-  - [ ] Drag-and-drop + click-to-upload for `.docx`.
-  - [ ] File validation (type, size) and user-friendly error messages.
-- [ ] Implement `/api/parse-document`:
-  - [ ] Accept `.docx` via `FormData`.
-  - [ ] Convert to HTML/text using `mammoth` (or similar).
-  - [ ] Return parsed content to the client.
-- [ ] Render a scrollable preview of the parsed document.
-- [ ] Add an optional "Use sample document" button for quick demos.
+- [x] Build upload UI:
+  - [x] Drag-and-drop + click-to-upload for `.docx`.
+  - [x] File validation (type, size) and user-friendly error messages.
+- [x] Implement `/api/parse-document`:
+  - [x] Accept `.docx` via `FormData`.
+  - [x] Convert to HTML/text using `mammoth` (or similar).
+  - [x] Return parsed content to the client.
+- [x] Render a scrollable preview of the parsed document.
+- [x] Add an optional "Use sample document" button for quick demos.
 
 ---
 
@@ -82,7 +82,7 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
   - [ ] Invalid file type.
   - [ ] Parsing failures.
   - [ ] No placeholders detected.
-- [ ] Responsive layout and basic accessibility checks.
+- [ ] Responsive layout with MD3 color scheme and basic accessibility checks.
 - [ ] Copy polish (helper text around upload, placeholders, and conversation).
 - [ ] Smoke test full flow with sample documents.
 
