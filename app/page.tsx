@@ -879,7 +879,7 @@ export default function Home() {
           )}
         </div>
 
-        <section className="grid gap-8 grid-cols-1 lg:grid-cols-[320px_1fr_380px]" style={{ gridTemplateColumns: 'minmax(0, 320px) 1fr minmax(0, 380px)' }}>
+        <section className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-[320px_1fr_380px]">
           {/* Left sidebar - always visible */}
           <div className="space-y-6">
             <div className="rounded-3xl border border-dashed p-6 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
