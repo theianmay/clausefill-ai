@@ -65,6 +65,7 @@ export default function Home() {
   const [isTyping, setIsTyping] = useState(false);
   const [userApiKey, setUserApiKey] = useState("");
   const [questionCache, setQuestionCache] = useState<Record<string, string>>({});
+  const [hasAmbiguousWarning, setHasAmbiguousWarning] = useState(false);
 
   // Normalize user input based on context
   const normalizeValue = useCallback((value: string, placeholder: string): string => {
@@ -340,6 +341,39 @@ export default function Home() {
       setLastUpdated(new Date().toLocaleTimeString());
 
       const extractedPlaceholders = extractPlaceholders(text);
+      
+      // Check for problematic document formatting
+      if (extractedPlaceholders.length > 0) {
+        // Count how many times each placeholder appears
+        const placeholderOccurrences = new Map<string, number>();
+        extractedPlaceholders.forEach(placeholder => {
+          const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const regex = new RegExp(escapedPlaceholder, "g");
+          const count = (text.match(regex) || []).length;
+          placeholderOccurrences.set(placeholder, count);
+        });
+        
+        // Check if any placeholder appears too many times (likely ambiguous)
+        const ambiguousPlaceholders = Array.from(placeholderOccurrences.entries())
+          .filter(([placeholder, count]) => count > 5 && placeholder.match(/^_{3,}$/));
+        
+        if (ambiguousPlaceholders.length > 0 && !hasAmbiguousWarning) {
+          // Show warning about ambiguous placeholders
+          setHasAmbiguousWarning(true);
+          setIsTyping(true);
+          setTimeout(() => {
+            setMessages([
+              {
+                role: "assistant",
+                content: `⚠️ **Document Formatting Issue Detected**\n\nThis document uses the same placeholder (\`${ambiguousPlaceholders[0][0]}\`) **${ambiguousPlaceholders[0][1]} times**. This means all ${ambiguousPlaceholders[0][1]} fields will be filled with the same value.\n\n**Recommended fix:**\n\nUpdate your document to use descriptive placeholders:\n- ❌ \`________________\` (used everywhere)\n- ✅ \`[Effective Date]\`, \`[Party Name]\`, \`[Address]\`, etc.\n\n**You can:**\n1. Edit your document to use unique placeholders\n2. Type "continue" to proceed anyway\n3. Upload a different document`,
+              },
+            ]);
+            setIsTyping(false);
+          }, 500);
+          return;
+        }
+      }
+      
       if (extractedPlaceholders.length > 0) {
         // Generate ALL questions at once (batch) BEFORE showing any messages
         setIsTyping(true);
@@ -509,6 +543,7 @@ export default function Home() {
     setUploadError(null);
     setIsParsing(false);
     setIsDownloading(false);
+    setHasAmbiguousWarning(false);
     
     // Clear file input
     if (fileInputRef.current) {
@@ -516,23 +551,38 @@ export default function Home() {
     }
   }, []);
 
-  const handleSubmitAnswer = useCallback(() => {
-    if (!userInput.trim() || currentPlaceholderIndex >= placeholders.length) return;
+  const handleSubmitAnswer = useCallback(async (isSkip = false) => {
+    if (!isSkip && !userInput.trim()) return;
 
-    const currentPlaceholder = placeholders[currentPlaceholderIndex];
-    const isSkip = userInput.trim().toLowerCase() === "skip";
-    
-    // Add user message and show typing indicator
+    // Check if user is responding to ambiguous placeholder warning
+    if (hasAmbiguousWarning && userInput.trim().toLowerCase() === 'continue') {
+      setHasAmbiguousWarning(false);
+      setMessages([
+        ...messages,
+        { role: "user", content: userInput.trim() },
+        { role: "assistant", content: "Okay, continuing with the document. Note that identical placeholders will be filled with the same value." }
+      ]);
+      setUserInput("");
+      
+      // Re-trigger document parsing to continue
+      if (templateHtml && templateText) {
+        handleParsedDocument(documentMeta?.name || "Document", templateHtml, templateText);
+      }
+      return;
+    }
+
+    // Add user's answer to messages
     setMessages([
       ...messages,
-      { role: "user" as const, content: userInput.trim() },
+      { role: "user", content: isSkip ? "skip" : userInput.trim() },
     ]);
     setUserInput("");
     setIsTyping(true);
 
     // Simulate thinking delay, then generate AI question
     setTimeout(async () => {
-      const newMessages = [...messages, { role: "user" as const, content: userInput.trim() }];
+      const currentPlaceholder = placeholders[currentPlaceholderIndex];
+      const newMessages = [...messages, { role: "user" as const, content: isSkip ? "skip" : userInput.trim() }];
 
       let newAnswers = answers;
       if (!isSkip) {
@@ -571,7 +621,7 @@ export default function Home() {
       setMessages(newMessages);
       setIsTyping(false);
     }, 500);
-  }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion]);
+  }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion, hasAmbiguousWarning, normalizeValue, templateHtml, templateText, documentMeta, handleParsedDocument]);
 
   const handleSkipPlaceholder = useCallback(async (placeholderToSkip: string) => {
     const indexToSkip = placeholders.indexOf(placeholderToSkip);
