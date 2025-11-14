@@ -266,7 +266,7 @@ export default function Home() {
           setMessages([
             {
               role: "assistant",
-              content: "⚠️ No placeholders detected in this document.\n\n📝 For best results, format placeholders like:\n\n• [Company Name]\n• $[Amount]\n• {variable}\n• ___ (3+ underscores)\n• [ ] (empty brackets)\n\n💡 What you can do:\n\n1. Upload a different document with placeholders\n2. Download this document as-is\n3. Edit your document to add placeholders and re-upload",
+              content: "⚠️ **No placeholders detected in this document.**\n\n📝 **For best results, format placeholders like:**\n\n- [Company Name]  \n- $[Amount]  \n- {variable}  \n- ___ (3+ underscores)  \n- [ ] (empty brackets)\n\n💡 **What you can do:**\n\n1. Upload a different document with placeholders  \n2. Download this document as-is  \n3. Edit your document to add placeholders and re-upload",
             },
           ]);
           setIsTyping(false);
@@ -917,12 +917,14 @@ export default function Home() {
                         color: message.role === "user" ? "var(--md-sys-color-on-primary)" : "var(--md-sys-color-on-surface)"
                       }}
                     >
-                      <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                      <div className="text-sm leading-relaxed">
                         <ReactMarkdown
                           components={{
                             p: ({node, ...props}) => <p className="my-1" {...props} />,
-                            ul: ({node, ...props}) => <ul className="my-1 space-y-0.5" {...props} />,
-                            li: ({node, ...props}) => <li className="my-0" {...props} />,
+                            ul: ({node, ...props}) => <ul className="my-2 ml-4 space-y-1 list-disc" {...props} />,
+                            ol: ({node, ...props}) => <ol className="my-2 ml-4 space-y-1 list-decimal" {...props} />,
+                            li: ({node, ...props}) => <li className="ml-1" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
                             h1: ({node, ...props}) => <h1 className="text-base font-semibold mt-2 mb-1" {...props} />,
                             h2: ({node, ...props}) => <h2 className="text-sm font-semibold mt-2 mb-1" {...props} />,
                             h3: ({node, ...props}) => <h3 className="text-sm font-medium mt-1 mb-0.5" {...props} />,
