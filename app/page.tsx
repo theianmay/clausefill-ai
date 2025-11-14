@@ -256,13 +256,46 @@ export default function Home() {
     setMessages(newMessages);
   }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion]);
 
+  const handleDownload = useCallback(async () => {
+    try {
+      const response = await fetch("/api/generate-doc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          templateText,
+          answers,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate document");
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `completed-document-${Date.now()}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download failed", error);
+      alert("Failed to download document. Please try again.");
+    }
+  }, [templateText, answers]);
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 text-slate-900">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6">
         <header className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
             <span>Project status</span>
-            <span className="text-emerald-600">Phase 3: Conversational Flow</span>
+            <span className="text-emerald-600">Phase 4: Complete & Download</span>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -503,6 +536,7 @@ export default function Home() {
                 <div className="border-t border-slate-200 pt-4">
                   <button
                     type="button"
+                    onClick={handleDownload}
                     className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
                   >
                     Download Completed Document

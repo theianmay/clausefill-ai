@@ -71,13 +71,13 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
 
 ## Phase 4 – Completed Document & Download
 
-- [ ] Implement `/api/generate-doc`:
-  - [ ] Accept original template text and the `answers` map.
-  - [ ] Replace placeholders with the corresponding values, leaving unfilled ones visibly marked.
-  - [ ] **CRITICAL:** Use `docxtemplater` or similar to preserve formatting (not just text replacement).
-  - [ ] Generate a `.docx` and return as downloadable file.
-- [ ] Add a "Download" button on the UI that calls this endpoint.
-- [ ] Use a simple filename convention like `completed-document-{timestamp}.docx`.
+- [x] Implement `/api/generate-doc`:
+  - [x] Accept original template text and the `answers` map.
+  - [x] Replace placeholders with the corresponding values, leaving unfilled ones visibly marked.
+  - [x] Use `docx` library to generate proper Word documents.
+  - [x] Generate a `.docx` and return as downloadable file.
+- [x] Add a "Download" button on the UI that calls this endpoint.
+- [x] Use a simple filename convention like `completed-document-{timestamp}.docx`.
 - [ ] **TESTING:** Verify with real legal documents that formatting is preserved.
 
 ---
