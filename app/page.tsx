@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ThemeToggle } from "./components/ThemeToggle";
+import ReactMarkdown from "react-markdown";
 
 // Enhanced regex to match common placeholder patterns:
 // - [Company Name], $[Amount], {variable}
@@ -63,6 +64,115 @@ export default function Home() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [userApiKey, setUserApiKey] = useState("");
+  const [questionCache, setQuestionCache] = useState<Record<string, string>>({});
+
+  // Normalize user input based on context
+  const normalizeValue = useCallback((value: string, placeholder: string): string => {
+    const trimmedValue = value.trim();
+    const lowerPlaceholder = placeholder.toLowerCase();
+    
+    // State abbreviations to full names
+    const stateMap: Record<string, string> = {
+      'al': 'Alabama', 'ak': 'Alaska', 'az': 'Arizona', 'ar': 'Arkansas', 'ca': 'California',
+      'co': 'Colorado', 'ct': 'Connecticut', 'de': 'Delaware', 'fl': 'Florida', 'ga': 'Georgia',
+      'hi': 'Hawaii', 'id': 'Idaho', 'il': 'Illinois', 'in': 'Indiana', 'ia': 'Iowa',
+      'ks': 'Kansas', 'ky': 'Kentucky', 'la': 'Louisiana', 'me': 'Maine', 'md': 'Maryland',
+      'ma': 'Massachusetts', 'mi': 'Michigan', 'mn': 'Minnesota', 'ms': 'Mississippi', 'mo': 'Missouri',
+      'mt': 'Montana', 'ne': 'Nebraska', 'nv': 'Nevada', 'nh': 'New Hampshire', 'nj': 'New Jersey',
+      'nm': 'New Mexico', 'ny': 'New York', 'nc': 'North Carolina', 'nd': 'North Dakota', 'oh': 'Ohio',
+      'ok': 'Oklahoma', 'or': 'Oregon', 'pa': 'Pennsylvania', 'ri': 'Rhode Island', 'sc': 'South Carolina',
+      'sd': 'South Dakota', 'tn': 'Tennessee', 'tx': 'Texas', 'ut': 'Utah', 'vt': 'Vermont',
+      'va': 'Virginia', 'wa': 'Washington', 'wv': 'West Virginia', 'wi': 'Wisconsin', 'wy': 'Wyoming',
+      'dc': 'District of Columbia'
+    };
+    
+    // Check if this is a state-related field
+    if (/state|jurisdiction|incorporation/i.test(lowerPlaceholder)) {
+      const lowerValue = trimmedValue.toLowerCase();
+      // If it's a 2-letter abbreviation, expand it
+      if (lowerValue.length === 2 && stateMap[lowerValue]) {
+        return stateMap[lowerValue];
+      }
+    }
+    
+    // Check if this is a date field
+    if (/date|day|effective/i.test(lowerPlaceholder)) {
+      const lowerValue = trimmedValue.toLowerCase();
+      const today = new Date();
+      
+      if (lowerValue === 'today') {
+        return today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'tomorrow') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'next week') {
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        return nextWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else if (lowerValue === 'last week') {
+        const lastWeek = new Date(today);
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        return lastWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    }
+    
+    // Check if this is an amount field
+    if (placeholder.startsWith('$') || /amount|price|cost|fee|payment|salary/i.test(lowerPlaceholder)) {
+      // Remove any existing $ and commas
+      const numericValue = trimmedValue.replace(/[$,]/g, '');
+      if (!isNaN(Number(numericValue))) {
+        // Format as currency
+        return '$' + Number(numericValue).toLocaleString('en-US');
+      }
+    }
+    
+    // Check if this is a company name field - normalize business entity suffixes
+    if (/company|corporation|corp|business|entity|organization|employer/i.test(lowerPlaceholder)) {
+      // Business entity suffix mappings (case-insensitive match, proper case output)
+      const entityMap: Record<string, string> = {
+        'llc': 'LLC',
+        'l.l.c.': 'LLC',
+        'l.l.c': 'LLC',
+        'inc': 'Inc.',
+        'inc.': 'Inc.',
+        'incorporated': 'Inc.',
+        'corp': 'Corp.',
+        'corp.': 'Corp.',
+        'corporation': 'Corporation',
+        'ltd': 'Ltd.',
+        'ltd.': 'Ltd.',
+        'limited': 'Limited',
+        'co': 'Co.',
+        'co.': 'Co.',
+        'company': 'Company',
+        'lp': 'LP',
+        'l.p.': 'LP',
+        'llp': 'LLP',
+        'l.l.p.': 'LLP',
+        'pllc': 'PLLC',
+        'p.l.l.c.': 'PLLC',
+        'pc': 'PC',
+        'p.c.': 'PC'
+      };
+      
+      // Replace entity suffixes with proper formatting
+      let normalized = trimmedValue;
+      Object.entries(entityMap).forEach(([pattern, replacement]) => {
+        // Match the pattern at the end of the string (case-insensitive)
+        const regex = new RegExp(`\\b${pattern.replace(/\./g, '\\.')}\\b$`, 'i');
+        normalized = normalized.replace(regex, replacement);
+      });
+      
+      return normalized;
+    }
+    
+    return trimmedValue;
+  }, []);
 
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
@@ -104,7 +214,71 @@ export default function Home() {
     return highlighted;
   }, [templateHtml, placeholders, answers]);
 
+  // Generate all questions at once (batch)
+  const generateAllQuestions = useCallback(async (placeholderList: string[]): Promise<Record<string, string>> => {
+    try {
+      const response = await fetch("/api/generate-questions-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          placeholders: placeholderList,
+          documentContext: templateText,
+          userApiKey: userApiKey || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate questions");
+      }
+
+      const data = await response.json();
+      const cache: Record<string, string> = {};
+      
+      // Handle both array and object responses
+      // AI sometimes returns "questions" or "placeholders" as the key
+      const questionsList = Array.isArray(data.questions) 
+        ? data.questions 
+        : Array.isArray(data.placeholders)
+          ? data.placeholders
+          : Array.isArray(data) 
+            ? data 
+            : [];
+      
+      if (questionsList.length === 0) {
+        console.error("No questions in response. Data:", data);
+        throw new Error("No questions returned from API");
+      }
+      
+      questionsList.forEach((q: { placeholder: string; question: string }) => {
+        cache[q.placeholder] = q.question;
+      });
+      
+      console.log(`Generated ${Object.keys(cache).length} questions in batch`);
+      return cache;
+    } catch (error) {
+      console.error("Error generating batch questions:", error);
+      // Fallback to simple questions
+      const cache: Record<string, string> = {};
+      placeholderList.forEach(p => {
+        const clean = p.replace(/^\$?\[|\]$/g, "").replace(/^\{|\}$/g, "").replace(/_+/g, "").trim() || "this value";
+        cache[p] = `What is the ${clean}?`;
+      });
+      return cache;
+    }
+  }, [templateText, userApiKey]);
+
   const generateQuestion = useCallback(async (placeholder: string): Promise<string> => {
+    // Check cache first
+    console.log(`Looking for "${placeholder}" in cache. Cache has ${Object.keys(questionCache).length} keys:`, Object.keys(questionCache));
+    
+    if (questionCache[placeholder]) {
+      console.log(`✓ Using cached question for: ${placeholder}`);
+      return questionCache[placeholder];
+    }
+    
+    console.log(`✗ Cache miss for: ${placeholder}, generating individually...`);
+    
+    // Fallback to individual generation if not in cache
     try {
       // Call AI endpoint to generate contextual question
       const response = await fetch("/api/generate-question", {
@@ -118,6 +292,15 @@ export default function Home() {
       });
 
       if (!response.ok) {
+        // Handle rate limit error
+        if (response.status === 429) {
+          const data = await response.json();
+          console.warn("Rate limit exceeded:", data.message);
+          // Use fallback question from response or generate one
+          if (data.fallbackQuestion) {
+            return data.fallbackQuestion;
+          }
+        }
         throw new Error("Failed to generate question");
       }
 
@@ -151,37 +334,50 @@ export default function Home() {
 
       const extractedPlaceholders = extractPlaceholders(text);
       if (extractedPlaceholders.length > 0) {
-        // Show typing indicator, then first message
+        // Generate ALL questions at once (batch) BEFORE showing any messages
         setIsTyping(true);
-        setTimeout(async () => {
-          setMessages([
-            {
-              role: "assistant",
-              content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
-            },
-          ]);
-          setIsTyping(false);
+        
+        try {
+          // Wait for questions to be generated first
+          const generatedQuestions = await generateAllQuestions(extractedPlaceholders);
+          console.log("Generated questions cache:", generatedQuestions);
+          console.log("Cache keys:", Object.keys(generatedQuestions));
           
-          // Show typing indicator again, then first question
-          setTimeout(async () => {
-            setIsTyping(true);
-            // Generate AI question
-            const firstQuestion = await generateQuestion(extractedPlaceholders[0]);
+          // Set cache BEFORE showing any messages
+          setQuestionCache(generatedQuestions);
+          
+          // Now show messages
+          setTimeout(() => {
+            setMessages([
+              {
+                role: "assistant",
+                content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
+              },
+            ]);
+            setIsTyping(false);
+            
+            // Show typing indicator again, then first question
             setTimeout(() => {
-              setMessages([
-                {
-                  role: "assistant",
-                  content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
-                },
-                {
-                  role: "assistant",
-                  content: firstQuestion,
-                },
-              ]);
-              setIsTyping(false);
-            }, 500);
-          }, 100);
-        }, 500);
+              setIsTyping(true);
+              setTimeout(() => {
+                setMessages([
+                  {
+                    role: "assistant",
+                    content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
+                  },
+                  {
+                    role: "assistant",
+                    content: generatedQuestions[extractedPlaceholders[0]] || `What is the ${extractedPlaceholders[0]}?`,
+                  },
+                ]);
+                setIsTyping(false);
+              }, 500);
+            }, 100);
+          }, 500);
+        } catch (error) {
+          console.error("Error generating questions:", error);
+          setIsTyping(false);
+        }
       } else {
         // Show typing indicator for no placeholders message
         setIsTyping(true);
@@ -189,14 +385,14 @@ export default function Home() {
           setMessages([
             {
               role: "assistant",
-              content: "⚠️ No placeholders detected in this document.\n\nFor best results, format placeholders like:\n• [Company Name]\n• $[Amount]\n• {variable}\n• ___ (3+ underscores)\n• [ ] (empty brackets)\n\nYou can:\n1. Upload a different document with placeholders\n2. Download this document as-is\n3. Edit your document to add placeholders and re-upload",
+              content: "⚠️ **No placeholders detected in this document.**\n\n📝 **For best results, format placeholders like:**\n\n- [Company Name]  \n- $[Amount]  \n- {variable}  \n- ___ (3+ underscores)  \n- [ ] (empty brackets)\n\n💡 **What you can do:**\n\n1. Upload a different document with placeholders  \n2. Download this document as-is  \n3. Edit your document to add placeholders and re-upload",
             },
           ]);
           setIsTyping(false);
         }, 500);
       }
     },
-    [extractPlaceholders, generateQuestion],
+    [extractPlaceholders, generateAllQuestions],
   );
 
   const parseDocument = useCallback(
@@ -277,9 +473,18 @@ export default function Home() {
     [handleFile],
   );
 
-  const applySampleDocument = useCallback(() => {
-    handleParsedDocument("Sample SAFE Template.docx", sampleTemplateHtml, sampleTemplateText);
-    setUploadError(null);
+  const handleUseSample = useCallback(async () => {
+    // For sample document, we need to create a basic .docx buffer
+    // Since we don't have the original file, we'll create a simple one
+    try {
+      // Fetch a basic SAFE template or create a minimal docx
+      // For now, we'll just disable download for sample docs
+      setOriginalFileBuffer(null);
+      
+      handleParsedDocument("Sample SAFE Agreement", sampleTemplateHtml, sampleTemplateText);
+    } catch (error) {
+      console.error("Error loading sample:", error);
+    }
   }, [handleParsedDocument]);
 
   const handleReset = useCallback(() => {
@@ -324,8 +529,9 @@ export default function Home() {
 
       let newAnswers = answers;
       if (!isSkip) {
-        // Only save answer if not skipping
-        newAnswers = { ...answers, [currentPlaceholder]: userInput.trim() };
+        // Only save answer if not skipping - normalize the value first
+        const normalizedValue = normalizeValue(userInput.trim(), currentPlaceholder);
+        newAnswers = { ...answers, [currentPlaceholder]: normalizedValue };
         setAnswers(newAnswers);
       } else {
         // Acknowledge skip
@@ -402,7 +608,7 @@ export default function Home() {
 
   const handleDownload = useCallback(async () => {
     if (!originalFileBuffer) {
-      alert("Original document not available. Please upload a document first.");
+      alert("Download is only available for uploaded documents. The sample document is for demonstration purposes only. Please upload your own .docx file to download a filled version.");
       return;
     }
 
@@ -696,7 +902,7 @@ export default function Home() {
               {!templateHtml ? (
                 <button
                   type="button"
-                  onClick={applySampleDocument}
+                  onClick={handleUseSample}
                   className="mt-4 w-full rounded-2xl border py-3 text-sm font-semibold transition"
                   style={{ background: "var(--md-sys-color-primary-container)", borderColor: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary-container)" }}
                 >
@@ -840,7 +1046,22 @@ export default function Home() {
                         color: message.role === "user" ? "var(--md-sys-color-on-primary)" : "var(--md-sys-color-on-surface)"
                       }}
                     >
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <div className="text-sm leading-relaxed">
+                        <ReactMarkdown
+                          components={{
+                            p: ({node, ...props}) => <p className="my-1" {...props} />,
+                            ul: ({node, ...props}) => <ul className="my-2 ml-4 space-y-1 list-disc" {...props} />,
+                            ol: ({node, ...props}) => <ol className="my-2 ml-4 space-y-1 list-decimal" {...props} />,
+                            li: ({node, ...props}) => <li className="ml-1" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
+                            h1: ({node, ...props}) => <h1 className="text-base font-semibold mt-2 mb-1" {...props} />,
+                            h2: ({node, ...props}) => <h2 className="text-sm font-semibold mt-2 mb-1" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-sm font-medium mt-1 mb-0.5" {...props} />,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -9,7 +9,9 @@ Fill legal documents faster with AI-guided conversations. Upload your .docx temp
 ## Features
 
 - ✅ **Preserves formatting** - Original document structure maintained
-- ✅ **AI-enhanced questions** - Natural, contextual questions (optional)
+- ✅ **AI-enhanced questions** - Natural, contextual questions with smart field detection
+- ✅ **Batch processing** - Generates all questions at once for faster performance
+- ✅ **Smart field grouping** - Automatically detects similar fields (company names, dates, amounts)
 - ✅ **No data stored** - Everything processed in your browser
 - ✅ **Works offline** - No AI key required (uses deterministic fallback)
 - ✅ **Multiple placeholder formats** - `[brackets]`, `{curly}`, `$[amount]`, `___`
@@ -44,6 +46,8 @@ For AI-enhanced question generation, you have two options:
    ```
 3. Restart the dev server
 4. All users will use this default key (unless they provide their own)
+
+**Rate Limiting:** When using a default API key, the app automatically rate limits to **50 AI questions per hour per IP address** to prevent abuse. Users can bypass this by providing their own API key.
 
 **Note:** The app works perfectly without any API key using deterministic questions.
 
