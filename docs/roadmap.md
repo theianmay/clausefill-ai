@@ -84,17 +84,19 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
 
 ## Phase 5 – Polish & QA
 
-- [ ] Improve error handling and empty states:
-  - [ ] Invalid file type.
-  - [ ] Parsing failures.
-  - [ ] No placeholders detected.
-  - [ ] Large files (>5MB) with helpful guidance.
-- [ ] Responsive layout with MD3 color scheme and basic accessibility checks.
-- [ ] Copy polish (helper text around upload, placeholders, and conversation).
-- [ ] **USER GUIDANCE:** Add help section explaining:
-  - [ ] Supported placeholder formats with examples.
-  - [ ] What to expect from the conversational flow.
-  - [ ] Tips for preparing documents.
+- [x] Improve error handling and empty states:
+  - [x] Invalid file type.
+  - [x] Parsing failures.
+  - [x] No placeholders detected with helpful guidance.
+  - [x] Large files (>4MB) with helpful guidance.
+- [x] Responsive layout and basic accessibility checks.
+- [x] Copy polish (helper text around upload, placeholders, and conversation).
+- [x] **USER GUIDANCE:** Add help section explaining:
+  - [x] Supported placeholder formats with examples.
+  - [x] What to expect from the conversational flow (footer).
+  - [x] Privacy note (no data stored).
+- [x] Loading states (download button, parsing indicator).
+- [x] Keyboard accessibility (Enter to submit, autofocus).
 - [ ] Smoke test full flow with sample documents.
 - [ ] **DEPLOYMENT:** Deploy to Vercel/Netlify for public URL access.
 - [ ] **REAL-WORLD TEST:** Test with actual legal documents (NDA, employment agreement, etc.).

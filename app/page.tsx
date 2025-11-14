@@ -56,6 +56,7 @@ export default function Home() {
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
@@ -135,7 +136,7 @@ export default function Home() {
         setMessages([
           {
             role: "assistant",
-            content: "I didn't find any placeholders in this document. You can download it as-is or upload a different document.",
+            content: "I didn't find any placeholders in this document. Placeholders should be formatted like [Company Name], $[Amount], {variable}, ___, or [ ]. You can upload a different document or download this one as-is.",
           },
         ]);
       }
@@ -257,6 +258,7 @@ export default function Home() {
   }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion]);
 
   const handleDownload = useCallback(async () => {
+    setIsDownloading(true);
     try {
       const response = await fetch("/api/generate-doc", {
         method: "POST",
@@ -286,6 +288,8 @@ export default function Home() {
     } catch (error) {
       console.error("Download failed", error);
       alert("Failed to download document. Please try again.");
+    } finally {
+      setIsDownloading(false);
     }
   }, [templateText, answers]);
 
@@ -295,14 +299,14 @@ export default function Home() {
         <header className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
             <span>Project status</span>
-            <span className="text-emerald-600">Phase 4: Complete & Download</span>
+            <span className="text-emerald-600">Phase 5: Polished & Ready</span>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-4xl font-semibold tracking-tight text-slate-900">Clausefill-AI</h1>
               <p className="mt-2 max-w-3xl text-base text-slate-600">
-                Upload a legal template (.docx), parse it server-side with mammoth, and preview the
-                rendered document. Placeholders are automatically detected and listed.
+                Turn legal templates into guided conversations. Upload your .docx document, and I'll detect placeholders, 
+                ask you questions to fill them in, then generate a completed document ready to download.
               </p>
             </div>
             {documentMeta && (
@@ -388,7 +392,7 @@ export default function Home() {
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Quick start
               </p>
-              <p className="mt-2 text-sm text-slate-600">No .docx handy? Load a ready-made SAFE sample.</p>
+              <p className="mt-2 text-sm text-slate-600">No .docx handy? Load a ready-made SAFE sample to try it out.</p>
               <button
                 type="button"
                 onClick={applySampleDocument}
@@ -396,6 +400,16 @@ export default function Home() {
               >
                 Use sample document
               </button>
+              <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                <p className="font-semibold text-slate-700 mb-1">Supported placeholder formats:</p>
+                <ul className="space-y-0.5 ml-3">
+                  <li>• Square brackets: <code className="bg-white px-1 rounded">[Company Name]</code></li>
+                  <li>• With dollar sign: <code className="bg-white px-1 rounded">$[Amount]</code></li>
+                  <li>• Curly braces: <code className="bg-white px-1 rounded">{`{variable}`}</code></li>
+                  <li>• Underscores: <code className="bg-white px-1 rounded">___</code></li>
+                  <li>• Empty brackets: <code className="bg-white px-1 rounded">[ ]</code></li>
+                </ul>
+              </div>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -519,7 +533,9 @@ export default function Home() {
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       placeholder="Type your answer..."
+                      autoFocus
                       className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      aria-label="Answer input"
                     />
                     <button
                       type="submit"
@@ -532,20 +548,44 @@ export default function Home() {
                 </div>
               )}
 
-              {currentPlaceholderIndex >= placeholders.length && placeholders.length > 0 && (
+              {((currentPlaceholderIndex >= placeholders.length && placeholders.length > 0) || 
+                (placeholders.length === 0 && templateHtml)) && (
                 <div className="border-t border-slate-200 pt-4">
                   <button
                     type="button"
                     onClick={handleDownload}
-                    className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                    disabled={isDownloading}
+                    className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Download Completed Document
+                    {isDownloading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                      </>
+                    ) : (
+                      placeholders.length === 0 ? "Download Document" : "Download Completed Document"
+                    )}
                   </button>
                 </div>
               )}
             </div>
           )}
         </section>
+
+        <footer className="mt-12 border-t border-slate-200 pt-8 text-center text-sm text-slate-500">
+          <div className="space-y-2">
+            <p>
+              <strong className="text-slate-700">How it works:</strong> Upload a .docx template → 
+              Placeholders are detected → Answer questions conversationally → Download completed document
+            </p>
+            <p className="text-xs">
+              All processing happens in your browser session. No data is stored or shared.
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );
