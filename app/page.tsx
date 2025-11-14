@@ -236,6 +236,28 @@ export default function Home() {
     setUploadError(null);
   }, [handleParsedDocument]);
 
+  const handleReset = useCallback(() => {
+    // Clear all state
+    setTemplateHtml("");
+    setTemplateText("");
+    setOriginalFileBuffer(null);
+    setPlaceholders([]);
+    setAnswers({});
+    setDocumentMeta(null);
+    setLastUpdated("");
+    setMessages([]);
+    setCurrentPlaceholderIndex(0);
+    setUserInput("");
+    setUploadError(null);
+    setIsParsing(false);
+    setIsDownloading(false);
+    
+    // Clear file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
   const handleSubmitAnswer = useCallback(() => {
     if (!userInput.trim() || currentPlaceholderIndex >= placeholders.length) return;
 
@@ -384,7 +406,22 @@ export default function Home() {
               <span>Project status</span>
               <span style={{ color: "var(--md-sys-color-tertiary)" }}>Phase 5: Polished & Ready</span>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              {templateHtml && (
+                <button
+                  onClick={handleReset}
+                  className="rounded-full px-4 py-2 text-sm font-semibold transition flex items-center gap-2"
+                  style={{ background: "var(--md-sys-color-error-container)", color: "var(--md-sys-color-on-error-container)" }}
+                  aria-label="Reset and start over"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reset
+                </button>
+              )}
+              <ThemeToggle />
+            </div>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -561,15 +598,31 @@ export default function Home() {
               <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 Quick start
               </p>
-              <p className="mt-2 text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>No .docx handy? Load a ready-made SAFE sample to try it out.</p>
-              <button
-                type="button"
-                onClick={applySampleDocument}
-                className="mt-4 w-full rounded-2xl border py-3 text-sm font-semibold transition"
-                style={{ background: "var(--md-sys-color-primary-container)", borderColor: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary-container)" }}
-              >
-                Use sample document
-              </button>
+              <p className="mt-2 text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+                {templateHtml ? "Want to start over with a different document?" : "No .docx handy? Load a ready-made SAFE sample to try it out."}
+              </p>
+              {!templateHtml ? (
+                <button
+                  type="button"
+                  onClick={applySampleDocument}
+                  className="mt-4 w-full rounded-2xl border py-3 text-sm font-semibold transition"
+                  style={{ background: "var(--md-sys-color-primary-container)", borderColor: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary-container)" }}
+                >
+                  Use sample document
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="mt-4 w-full rounded-2xl border py-3 text-sm font-semibold transition flex items-center justify-center gap-2"
+                  style={{ background: "var(--md-sys-color-error-container)", borderColor: "var(--md-sys-color-error)", color: "var(--md-sys-color-on-error-container)" }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reset & Start Over
+                </button>
+              )}
               <div className="mt-4 rounded-xl p-3 text-xs" style={{ background: "var(--md-sys-color-surface-container-high)", color: "var(--md-sys-color-on-surface-variant)" }}>
                 <p className="font-semibold mb-1" style={{ color: "var(--md-sys-color-on-surface)" }}>Supported placeholder formats:</p>
                 <ul className="space-y-0.5 ml-3">
