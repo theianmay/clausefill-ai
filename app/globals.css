@@ -43,6 +43,12 @@
   --md-sys-color-surface-container: #f3edf7;
   --md-sys-color-surface-container-high: #ece6f0;
   --md-sys-color-surface-container-highest: #e6e0e9;
+  
+  /* Success colors (custom addition) */
+  --md-sys-color-success: #2e7d32;
+  --md-sys-color-on-success: #ffffff;
+  --md-sys-color-success-container: #c8e6c9;
+  --md-sys-color-on-success-container: #1b5e20;
 }
 
 [data-theme="dark"] {
@@ -88,6 +94,12 @@
   --md-sys-color-surface-container: #211f26;
   --md-sys-color-surface-container-high: #2b2930;
   --md-sys-color-surface-container-highest: #36343b;
+  
+  /* Success colors (custom addition) */
+  --md-sys-color-success: #4caf50;
+  --md-sys-color-on-success: #003a00;
+  --md-sys-color-success-container: #1b5e20;
+  --md-sys-color-on-success-container: #a5d6a7;
 }
 
 @theme inline {

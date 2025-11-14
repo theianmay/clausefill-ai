@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ThemeToggle } from "./components/ThemeToggle";
 
 // Enhanced regex to match common placeholder patterns:
@@ -45,6 +45,7 @@ const formatBytes = (value: number) => {
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -63,6 +64,11 @@ export default function Home() {
     if (!placeholders.length) return "No placeholders detected yet";
     return `${placeholders.length} placeholder${placeholders.length === 1 ? "" : "s"}`;
   }, [placeholders.length]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const extractPlaceholders = useCallback((text: string) => {
     const matches = text.match(PLACEHOLDER_REGEX) ?? [];
@@ -522,6 +528,7 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
 
               {currentPlaceholderIndex < placeholders.length && (
@@ -563,7 +570,7 @@ export default function Home() {
                     onClick={handleDownload}
                     disabled={isDownloading}
                     className="w-full rounded-xl px-6 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    style={{ background: "var(--md-sys-color-tertiary)", color: "var(--md-sys-color-on-tertiary)" }}
+                    style={{ background: "var(--md-sys-color-success)", color: "var(--md-sys-color-on-success)" }}
                   >
                     {isDownloading ? (
                       <>
