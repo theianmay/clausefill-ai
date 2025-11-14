@@ -602,16 +602,31 @@ export default function Home() {
                   onChange={handleInputChange}
                 />
               </label>
-              <div className="mt-4 flex items-center justify-between text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
-                <p>Supported format: .docx (Word)</p>
-                <button
-                  type="button"
-                  className="text-sm font-semibold transition"
-                  style={{ color: "var(--md-sys-color-primary)" }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Browse files
-                </button>
+              <div className="mt-4 space-y-2 text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+                <div className="flex items-center justify-between">
+                  <p>Supported format: .docx (Word)</p>
+                  <button
+                    type="button"
+                    className="text-sm font-semibold transition"
+                    style={{ color: "var(--md-sys-color-primary)" }}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Browse files
+                  </button>
+                </div>
+                <p className="text-xs">
+                  Have a PDF? Convert it to .docx first using{" "}
+                  <a 
+                    href="https://www.adobe.com/acrobat/online/pdf-to-word.html" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline transition hover:opacity-70"
+                    style={{ color: "var(--md-sys-color-primary)" }}
+                  >
+                    Adobe's free converter
+                  </a>
+                  {" "}or similar tool.
+                </p>
               </div>
               {uploadError && (
                 <p className="mt-4 rounded-xl border px-3 py-2 text-sm" style={{ background: "var(--md-sys-color-error-container)", borderColor: "var(--md-sys-color-error)", color: "var(--md-sys-color-on-error-container)" }}>
