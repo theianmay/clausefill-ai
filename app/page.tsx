@@ -192,7 +192,7 @@ export default function Home() {
   }, []);
 
   const placeholderBadge = useMemo(() => {
-    if (!placeholders.length) return "No placeholders detected yet";
+    if (!placeholders.length) return "None yet";
     return `${placeholders.length} placeholder${placeholders.length === 1 ? "" : "s"}`;
   }, [placeholders.length]);
 
