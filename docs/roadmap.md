@@ -78,7 +78,7 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
   - [x] Store original file buffer in client state.
   - [x] Generate a `.docx` and return as downloadable file.
 - [x] Add a "Download" button on the UI that calls this endpoint.
-- [x] Use filename convention: `{original-name}-Clausefill.docx`.
+- [x] Use filename convention: `{original-name}-clausefill-ai-v1.docx`.
 - [x] **TESTING:** Verify with real legal documents that formatting is preserved.
 
 ---

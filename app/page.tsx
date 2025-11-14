@@ -356,10 +356,10 @@ export default function Home() {
       const a = document.createElement("a");
       a.href = url;
       
-      // Generate filename with -Clausefill suffix
+      // Generate filename with full suffix
       const originalName = documentMeta?.name || "document.docx";
       const nameWithoutExt = originalName.replace(/\.docx$/i, "");
-      a.download = `${nameWithoutExt}-Clausefill.docx`;
+      a.download = `${nameWithoutExt}-clausefill-ai-v1.docx`;
       
       document.body.appendChild(a);
       a.click();

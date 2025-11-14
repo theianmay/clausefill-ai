@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="${nameWithoutExt}-Clausefill.docx"`,
+        "Content-Disposition": `attachment; filename="${nameWithoutExt}-clausefill-ai-v1.docx"`,
       },
     });
   } catch (error) {
