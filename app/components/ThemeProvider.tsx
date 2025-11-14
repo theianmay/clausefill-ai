@@ -22,6 +22,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.setAttribute("data-theme", savedTheme);
+    } else {
+      // Set default theme
+      document.documentElement.setAttribute("data-theme", "dark");
     }
   }, []);
 
@@ -32,10 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("theme", newTheme);
   };
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Always render with ThemeContext, but don't show theme toggle until mounted
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

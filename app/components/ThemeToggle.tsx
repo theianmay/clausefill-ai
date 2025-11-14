@@ -1,9 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTheme } from "./ThemeProvider";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render until mounted to avoid SSR mismatch
+  if (!mounted) {
+    return (
+      <div className="rounded-full p-2 w-9 h-9" style={{ background: "var(--md-sys-color-surface-container-high)" }} />
+    );
+  }
 
   return (
     <button
