@@ -13,7 +13,7 @@ Fill legal documents faster with AI-guided conversations. Upload your .docx temp
 - ✅ **Multiple placeholder formats** - `[brackets]`, `{curly}`, `$[amount]`, `___` (3+ underscores)
 - ✅ **Live preview** - See changes in real-time as you fill
 - ✅ **No data stored** - Everything processed in your browser
-- ✅ **Skip functionality** - Skip placeholders and come back later
+- ✅ **Skip functionality** - Skip placeholders  that may not be applicable or erroneously detected
 
 ### AI-Powered Features
 - ✅ **AI-enhanced questions** - Natural, contextual questions using GPT-4o-mini
