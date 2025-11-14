@@ -39,9 +39,13 @@ This document tracks potential improvements and features that are not critical f
 ### Advanced Features
 
 #### AI-Enhanced Question Generation
-- [ ] Use GPT-4 to generate more contextual questions based on placeholder names
+- [x] ✅ Use GPT-4o-mini to generate contextual questions based on placeholder names (COMPLETED)
+- [x] ✅ Batch processing for efficient API usage (COMPLETED)
+- [x] ✅ Auto-detect placeholder type (date, amount, name, etc.) with smart normalization (COMPLETED)
+- [x] ✅ Rate limiting to protect API costs (COMPLETED)
+- [x] ✅ BYOK (Bring Your Own Key) support (COMPLETED)
 - [ ] Provide suggestions or examples for common legal terms
-- [ ] Auto-detect placeholder type (date, amount, name, etc.) and provide appropriate input validation
+- [ ] Input validation with type-specific constraints
 
 #### Document Templates
 - [ ] Pre-built templates for common legal documents
@@ -100,7 +104,7 @@ This document tracks potential improvements and features that are not critical f
 #### Security Enhancements
 - [ ] Document encryption at rest
 - [ ] Virus scanning for uploaded files
-- [ ] Rate limiting
+- [x] ✅ Rate limiting (COMPLETED - 50 requests/hour per IP)
 - [ ] CAPTCHA for abuse prevention
 
 #### Developer Experience

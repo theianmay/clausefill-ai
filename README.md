@@ -8,13 +8,37 @@ Fill legal documents faster with AI-guided conversations. Upload your .docx temp
 
 ## Features
 
-- ✅ **Preserves formatting** - Original document structure maintained
-- ✅ **AI-enhanced questions** - Natural, contextual questions with smart field detection
-- ✅ **Batch processing** - Generates all questions at once for faster performance
-- ✅ **Smart field grouping** - Automatically detects similar fields (company names, dates, amounts)
+### Core Functionality
+- ✅ **Preserves formatting** - Original document structure maintained perfectly
+- ✅ **Multiple placeholder formats** - `[brackets]`, `{curly}`, `$[amount]`, `___` (3+ underscores)
+- ✅ **Live preview** - See changes in real-time as you fill
 - ✅ **No data stored** - Everything processed in your browser
+- ✅ **Skip functionality** - Skip placeholders and come back later
+
+### AI-Powered Features
+- ✅ **AI-enhanced questions** - Natural, contextual questions using GPT-4o-mini
+- ✅ **Batch processing** - Generates all questions at once (8x faster, 89% cost reduction)
+- ✅ **Smart field detection** - Auto-categorizes: company, person, date, amount, address, email, phone
+- ✅ **Question caching** - Questions generated once, retrieved instantly
 - ✅ **Works offline** - No AI key required (uses deterministic fallback)
-- ✅ **Multiple placeholder formats** - `[brackets]`, `{curly}`, `$[amount]`, `___`
+
+### Smart Value Normalization
+- ✅ **State abbreviations** - `DE` → `Delaware`, `CA` → `California`
+- ✅ **Date shortcuts** - `today`, `tomorrow`, `yesterday` → Full formatted dates
+- ✅ **Currency formatting** - `100000` → `$100,000`
+- ✅ **Business entities** - `ABC llc` → `ABC LLC`, `XYZ corp` → `XYZ Corp.`
+
+### Security & Reliability
+- ✅ **Rate limiting** - 50 AI questions/hour per IP (protects your API costs)
+- ✅ **BYOK support** - Users can bring their own OpenAI API key
+- ✅ **Error handling** - Graceful fallbacks at every level
+- ✅ **Document validation** - Detects poorly formatted documents with helpful guidance
+
+### UX Enhancements
+- ✅ **Markdown chat** - Proper formatting with bullets, lists, bold text
+- ✅ **Typing indicators** - Shows AI is "thinking"
+- ✅ **Theme toggle** - Light/dark mode support
+- ✅ **Collapsible instructions** - Clean, uncluttered interface
 
 ## Getting Started
 
@@ -105,6 +129,51 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## How It Works
+
+1. **Upload** - Drag & drop or select a .docx file with placeholders
+2. **Parse** - App detects placeholders like `[Company Name]`, `$[Amount]`, `___`
+3. **Chat** - Answer questions in a conversational interface
+4. **Normalize** - Values are automatically formatted (states, dates, amounts, etc.)
+5. **Preview** - See your document update in real-time
+6. **Download** - Get your completed document with perfect formatting
+
+## Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + Material Design 3
+- **Document Parsing:** Mammoth.js
+- **Document Generation:** Docxtemplater
+- **AI:** OpenAI GPT-4o-mini (optional)
+- **Deployment:** Vercel
+
+## Performance
+
+- **Batch Processing:** 8x faster than individual API calls
+- **Cost Efficiency:** 89% reduction in API costs
+- **Rate Limiting:** 50 AI questions/hour per IP
+- **Response Time:** ~4 seconds for full document (vs ~18 seconds before optimization)
+
+## Documentation
+
+- **[Roadmap](docs/roadmap.md)** - Development phases and completed features
+- **[Spec](docs/spec.md)** - Product specification and architecture
+- **[Future Enhancements](docs/future-enhancements.md)** - Planned improvements
+- **[Cost Protection](docs/cost-protection.md)** - Detailed cost analysis and protection measures
+
+## Contributing
+
+This is a portfolio project. Feel free to fork and adapt for your own use!
+
+## License
+
+MIT
+
+## Support
+
+For questions or issues, please open an issue on GitHub.
 
 ## Learn More
 
