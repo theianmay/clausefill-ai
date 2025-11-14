@@ -19,43 +19,41 @@ export async function POST(request: Request) {
     // Load the docx file as binary content
     const zip = new PizZip(buffer);
     
-    // Prepare data for replacement
-    // Convert placeholder keys to template-friendly format
-    const templateData: Record<string, string> = {};
-    Object.entries(answers as Record<string, string>).forEach(([placeholder, value]) => {
-      // Remove brackets and special chars to create clean keys
-      let cleanKey = placeholder
-        .replace(/^\$?\[|\]$/g, "") // Remove [ ] and $
-        .replace(/^\{|\}$/g, "") // Remove { }
-        .replace(/_{3,}/g, "") // Remove underscores
-        .trim()
-        .replace(/\s+/g, "_"); // Replace spaces with underscores
-
-      templateData[cleanKey] = value;
-      
-      // Also keep original placeholder as key for direct replacement
-      templateData[placeholder] = value;
-    });
-
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-    });
-
-    // Use render() with data directly (new API)
-    try {
-      doc.render(templateData);
-    } catch (error) {
-      console.error("Error rendering template:", error);
-      // If rendering fails, try simple text replacement as fallback
+    // Get the document.xml content for manual replacement
+    const documentXml = zip.file("word/document.xml")?.asText();
+    
+    if (!documentXml) {
       return NextResponse.json(
-        { error: "Unable to fill placeholders. The document format may not be compatible." },
-        { status: 500 }
+        { error: "Invalid document format" },
+        { status: 400 }
       );
     }
 
+    // Perform manual text replacement for all placeholder formats
+    let modifiedXml = documentXml;
+    Object.entries(answers as Record<string, string>).forEach(([placeholder, value]) => {
+      // Escape special XML characters in the value
+      const escapedValue = value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+      
+      // Replace the placeholder (it might be split across XML tags)
+      // We need to handle cases where Word splits the text across multiple runs
+      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedPlaceholder, "g");
+      modifiedXml = modifiedXml.replace(regex, escapedValue);
+    });
+
+    // Update the zip with modified content
+    zip.file("word/document.xml", modifiedXml);
+
+    console.log("Replaced placeholders:", Object.keys(answers));
+
     // Generate the filled document
-    const filledBuffer = doc.getZip().generate({
+    const filledBuffer = zip.generate({
       type: "nodebuffer",
       compression: "DEFLATE",
     }) as Buffer;
