@@ -45,6 +45,8 @@ For AI-enhanced question generation, you have two options:
 3. Restart the dev server
 4. All users will use this default key (unless they provide their own)
 
+**Rate Limiting:** When using a default API key, the app automatically rate limits to **50 AI questions per hour per IP address** to prevent abuse. Users can bypass this by providing their own API key.
+
 **Note:** The app works perfectly without any API key using deterministic questions.
 
 ### Run Development Server

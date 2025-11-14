@@ -118,6 +118,15 @@ export default function Home() {
       });
 
       if (!response.ok) {
+        // Handle rate limit error
+        if (response.status === 429) {
+          const data = await response.json();
+          console.warn("Rate limit exceeded:", data.message);
+          // Use fallback question from response or generate one
+          if (data.fallbackQuestion) {
+            return data.fallbackQuestion;
+          }
+        }
         throw new Error("Failed to generate question");
       }
 

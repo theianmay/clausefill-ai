@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { checkRateLimit, getRateLimitConfig } from "@/app/lib/rate-limiter";
 
 // Initialize OpenAI client with default or user-provided key
 const defaultApiKey = process.env.OPENAI_API_KEY;
@@ -7,6 +8,22 @@ const defaultApiKey = process.env.OPENAI_API_KEY;
 function getOpenAIClient(userApiKey?: string): OpenAI | null {
   const apiKey = userApiKey || defaultApiKey;
   return apiKey ? new OpenAI({ apiKey }) : null;
+}
+
+function getClientIP(request: Request): string {
+  // Try to get real IP from headers (for proxies/load balancers)
+  const forwarded = request.headers.get("x-forwarded-for");
+  const realIp = request.headers.get("x-real-ip");
+  
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  if (realIp) {
+    return realIp;
+  }
+  
+  // Fallback to a generic identifier
+  return "unknown";
 }
 
 // Fallback function for deterministic question generation
@@ -37,6 +54,37 @@ export async function POST(request: Request) {
         { error: "Placeholder is required" },
         { status: 400 }
       );
+    }
+
+    // Rate limiting: Only apply when using default API key (not user's key)
+    if (!userApiKey && defaultApiKey) {
+      const clientIP = getClientIP(request);
+      const rateLimit = checkRateLimit(clientIP);
+      
+      if (!rateLimit.allowed) {
+        const resetDate = new Date(rateLimit.resetTime);
+        const config = getRateLimitConfig();
+        console.log(`Rate limit exceeded for IP: ${clientIP}`);
+        
+        return NextResponse.json(
+          {
+            error: "Rate limit exceeded",
+            message: `You've reached the maximum of ${config.maxRequests} AI questions per hour. Please try again after ${resetDate.toLocaleTimeString()}, or provide your own OpenAI API key.`,
+            resetTime: rateLimit.resetTime,
+            fallbackQuestion: generateDeterministicQuestion(placeholder),
+          },
+          { 
+            status: 429,
+            headers: {
+              "X-RateLimit-Limit": config.maxRequests.toString(),
+              "X-RateLimit-Remaining": "0",
+              "X-RateLimit-Reset": rateLimit.resetTime.toString(),
+            }
+          }
+        );
+      }
+      
+      console.log(`Rate limit check passed for IP: ${clientIP}, remaining: ${rateLimit.remaining}`);
     }
 
     // Get OpenAI client (user key or default)

@@ -156,6 +156,7 @@ Add OpenAI integration to generate contextual, natural questions instead of dete
 - [x] Install OpenAI SDK: `npm install openai`
 - [x] Support for user-provided API keys (in-app input field)
 - [x] Support for default API key via environment variable
+- [x] **Rate limiting:** 50 requests/hour per IP when using default key
 - [ ] Add `OPENAI_API_KEY` to `.env.local` for local development (optional)
 - [ ] Add `OPENAI_API_KEY` to Vercel environment variables for production (optional)
 - [x] Create `env.example` file documenting required environment variables
