@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 const PLACEHOLDER_REGEX = /\$?\[[^\]]+\]|\{[^}]+\}/g;
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB limit for Vercel serverless
 
 const sampleTemplateText = `SAFE Agreement
 
@@ -113,7 +113,7 @@ export default function Home() {
       }
 
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        setUploadError("File is too large (max 5 MB)");
+        setUploadError("File is too large (max 4 MB)");
         return;
       }
 
@@ -209,7 +209,7 @@ export default function Home() {
                   />
                 </svg>
                 <p className="text-base font-medium text-slate-900">Drag &amp; drop your .docx</p>
-                <p className="text-sm text-slate-500">or click to choose a file up to 5&nbsp;MB</p>
+                <p className="text-sm text-slate-500">or click to choose a file up to 4&nbsp;MB</p>
                 <input
                   ref={fileInputRef}
                   id="document-upload"
