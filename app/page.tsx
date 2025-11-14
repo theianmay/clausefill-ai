@@ -66,6 +66,57 @@ export default function Home() {
   const [userApiKey, setUserApiKey] = useState("");
   const [questionCache, setQuestionCache] = useState<Record<string, string>>({});
 
+  // Normalize user input based on context
+  const normalizeValue = useCallback((value: string, placeholder: string): string => {
+    const trimmedValue = value.trim();
+    const lowerPlaceholder = placeholder.toLowerCase();
+    
+    // State abbreviations to full names
+    const stateMap: Record<string, string> = {
+      'al': 'Alabama', 'ak': 'Alaska', 'az': 'Arizona', 'ar': 'Arkansas', 'ca': 'California',
+      'co': 'Colorado', 'ct': 'Connecticut', 'de': 'Delaware', 'fl': 'Florida', 'ga': 'Georgia',
+      'hi': 'Hawaii', 'id': 'Idaho', 'il': 'Illinois', 'in': 'Indiana', 'ia': 'Iowa',
+      'ks': 'Kansas', 'ky': 'Kentucky', 'la': 'Louisiana', 'me': 'Maine', 'md': 'Maryland',
+      'ma': 'Massachusetts', 'mi': 'Michigan', 'mn': 'Minnesota', 'ms': 'Mississippi', 'mo': 'Missouri',
+      'mt': 'Montana', 'ne': 'Nebraska', 'nv': 'Nevada', 'nh': 'New Hampshire', 'nj': 'New Jersey',
+      'nm': 'New Mexico', 'ny': 'New York', 'nc': 'North Carolina', 'nd': 'North Dakota', 'oh': 'Ohio',
+      'ok': 'Oklahoma', 'or': 'Oregon', 'pa': 'Pennsylvania', 'ri': 'Rhode Island', 'sc': 'South Carolina',
+      'sd': 'South Dakota', 'tn': 'Tennessee', 'tx': 'Texas', 'ut': 'Utah', 'vt': 'Vermont',
+      'va': 'Virginia', 'wa': 'Washington', 'wv': 'West Virginia', 'wi': 'Wisconsin', 'wy': 'Wyoming',
+      'dc': 'District of Columbia'
+    };
+    
+    // Check if this is a state-related field
+    if (/state|jurisdiction|incorporation/i.test(lowerPlaceholder)) {
+      const lowerValue = trimmedValue.toLowerCase();
+      // If it's a 2-letter abbreviation, expand it
+      if (lowerValue.length === 2 && stateMap[lowerValue]) {
+        return stateMap[lowerValue];
+      }
+    }
+    
+    // Check if this is a date field
+    if (/date|day|effective/i.test(lowerPlaceholder)) {
+      const lowerValue = trimmedValue.toLowerCase();
+      if (lowerValue === 'today') {
+        const today = new Date();
+        return today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    }
+    
+    // Check if this is an amount field
+    if (placeholder.startsWith('$') || /amount|price|cost|fee|payment|salary/i.test(lowerPlaceholder)) {
+      // Remove any existing $ and commas
+      const numericValue = trimmedValue.replace(/[$,]/g, '');
+      if (!isNaN(Number(numericValue))) {
+        // Format as currency
+        return '$' + Number(numericValue).toLocaleString('en-US');
+      }
+    }
+    
+    return trimmedValue;
+  }, []);
+
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
     return `${placeholders.length} placeholder${placeholders.length === 1 ? "" : "s"}`;
@@ -406,8 +457,9 @@ export default function Home() {
 
       let newAnswers = answers;
       if (!isSkip) {
-        // Only save answer if not skipping
-        newAnswers = { ...answers, [currentPlaceholder]: userInput.trim() };
+        // Only save answer if not skipping - normalize the value first
+        const normalizedValue = normalizeValue(userInput.trim(), currentPlaceholder);
+        newAnswers = { ...answers, [currentPlaceholder]: normalizedValue };
         setAnswers(newAnswers);
       } else {
         // Acknowledge skip
