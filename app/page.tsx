@@ -132,6 +132,15 @@ export default function Home() {
       }
     }
     
+    // Check if this is a percentage field
+    if (/percent|equity|ownership|share|stake|interest/i.test(lowerPlaceholder)) {
+      // Remove any existing % sign
+      const numericValue = trimmedValue.replace(/%/g, '').trim();
+      if (!isNaN(Number(numericValue))) {
+        return numericValue + '%';
+      }
+    }
+    
     // Check if this is a company name field - normalize business entity suffixes
     if (/company|corporation|corp|business|entity|organization|employer/i.test(lowerPlaceholder)) {
       let normalized = trimmedValue;
@@ -187,9 +196,14 @@ export default function Home() {
     return `${placeholders.length} placeholder${placeholders.length === 1 ? "" : "s"}`;
   }, [placeholders.length]);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll chat container to bottom when messages change (without scrolling the page)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      const chatContainer = messagesEndRef.current.parentElement;
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
   }, [messages]);
 
   const extractPlaceholders = useCallback((text: string) => {
@@ -720,7 +734,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen py-12" style={{ background: "var(--md-sys-color-background)", color: "var(--md-sys-color-on-background)" }}>
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6">
         <header className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--md-sys-color-surface-container)", color: "var(--md-sys-color-on-surface-variant)" }}>
@@ -865,7 +879,8 @@ export default function Home() {
           )}
         </div>
 
-        <section className={`grid gap-8 ${templateHtml ? "lg:grid-cols-[minmax(0,320px),1fr,minmax(0,380px)]" : "lg:grid-cols-[minmax(0,360px),1fr]"}`}>
+        <section className="grid gap-8 grid-cols-1 lg:grid-cols-[320px_1fr_380px]" style={{ gridTemplateColumns: 'minmax(0, 320px) 1fr minmax(0, 380px)' }}>
+          {/* Left sidebar - always visible */}
           <div className="space-y-6">
             <div className="rounded-3xl border border-dashed p-6 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
               <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
@@ -1048,19 +1063,20 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Middle: Document preview */}
           <div className="rounded-3xl border p-8 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                   Document preview
                 </p>
-                <p className="text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>Rendered directly from the parsed HTML</p>
+                <p className="text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>Live preview with your answers</p>
               </div>
               {templateText && (
                 <p className="text-xs" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>{templateText.split(" ").length} words</p>
               )}
             </div>
-            <div className="mt-6 h-[560px] overflow-y-auto rounded-2xl border p-6 text-base leading-relaxed" style={{ background: "var(--md-sys-color-surface-container-high)", borderColor: "var(--md-sys-color-outline-variant)", color: "var(--md-sys-color-on-surface)" }}>
+            <div className="mt-6 h-[calc(100vh-300px)] min-h-[500px] overflow-y-auto rounded-2xl border p-6 text-base leading-relaxed" style={{ background: "var(--md-sys-color-surface-container-high)", borderColor: "var(--md-sys-color-outline-variant)", color: "var(--md-sys-color-on-surface)" }}>
               {highlightedHtml ? (
                 <article className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
               ) : (
@@ -1072,7 +1088,8 @@ export default function Home() {
             </div>
           </div>
 
-          {templateHtml && (
+          {/* Right side: Chat (when document loaded) or empty state */}
+          {templateHtml ? (
             <div className="rounded-3xl border p-6 shadow-sm flex flex-col h-[calc(100vh-200px)] max-h-[800px]" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
               <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "var(--md-sys-color-outline-variant)" }}>
                 <div>
@@ -1197,6 +1214,13 @@ export default function Home() {
                   </button>
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="rounded-3xl border p-8 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
+              <div className="flex h-full flex-col items-center justify-center text-center" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+                <p className="text-base font-medium">Upload a document to start</p>
+                <p className="mt-2 text-sm">The conversational fill interface will appear here.</p>
+              </div>
             </div>
           )}
         </section>
