@@ -220,45 +220,50 @@ export default function Home() {
 
       const extractedPlaceholders = extractPlaceholders(text);
       if (extractedPlaceholders.length > 0) {
-        // Generate ALL questions at once (batch)
+        // Generate ALL questions at once (batch) BEFORE showing any messages
         setIsTyping(true);
         
-        // Generate questions in background
-        const questionsPromise = generateAllQuestions(extractedPlaceholders);
-        
-        setTimeout(async () => {
-          setMessages([
-            {
-              role: "assistant",
-              content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
-            },
-          ]);
-          setIsTyping(false);
-          
-          // Wait for questions to be generated
-          const generatedQuestions = await questionsPromise;
+        try {
+          // Wait for questions to be generated first
+          const generatedQuestions = await generateAllQuestions(extractedPlaceholders);
           console.log("Generated questions cache:", generatedQuestions);
           console.log("Cache keys:", Object.keys(generatedQuestions));
+          
+          // Set cache BEFORE showing any messages
           setQuestionCache(generatedQuestions);
           
-          // Show typing indicator again, then first question
+          // Now show messages
           setTimeout(() => {
-            setIsTyping(true);
+            setMessages([
+              {
+                role: "assistant",
+                content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
+              },
+            ]);
+            setIsTyping(false);
+            
+            // Show typing indicator again, then first question
             setTimeout(() => {
-              setMessages([
-                {
-                  role: "assistant",
-                  content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
-                },
-                {
-                  role: "assistant",
-                  content: generatedQuestions[extractedPlaceholders[0]] || `What is the ${extractedPlaceholders[0]}?`,
-                },
-              ]);
-              setIsTyping(false);
-            }, 500);
-          }, 100);
-        }, 500);
+              setIsTyping(true);
+              setTimeout(() => {
+                setMessages([
+                  {
+                    role: "assistant",
+                    content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
+                  },
+                  {
+                    role: "assistant",
+                    content: generatedQuestions[extractedPlaceholders[0]] || `What is the ${extractedPlaceholders[0]}?`,
+                  },
+                ]);
+                setIsTyping(false);
+              }, 500);
+            }, 100);
+          }, 500);
+        } catch (error) {
+          console.error("Error generating questions:", error);
+          setIsTyping(false);
+        }
       } else {
         // Show typing indicator for no placeholders message
         setIsTyping(true);

@@ -213,14 +213,20 @@ Return ONLY the JSON array, no other text.`,
         throw new Error("Empty response from OpenAI");
       }
 
+      console.log("Raw AI response:", aiResponse.substring(0, 200) + "...");
+
       // Parse AI response
       let parsed;
       try {
         parsed = JSON.parse(aiResponse);
       } catch (parseError) {
         console.error("Failed to parse AI response:", aiResponse);
+        console.error("Parse error:", parseError);
         throw new Error("Invalid JSON response from AI");
       }
+      
+      console.log("Parsed response type:", typeof parsed);
+      console.log("Parsed response keys:", Object.keys(parsed));
       
       // Extract questions array - handle different response formats
       let questions: PlaceholderGroup[];
