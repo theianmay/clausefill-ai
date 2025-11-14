@@ -107,11 +107,11 @@ export async function POST(request: Request) {
           {
             role: "system",
             content:
-              "You are a helpful assistant for legal document filling. Generate a clear, professional, and conversational question to ask the user for the value of a placeholder in their legal document. Keep questions concise (under 20 words). Be direct and friendly. Do not include the placeholder syntax in your question.",
+              "You are a helpful assistant for legal document filling. Generate a clear, professional, and conversational question to ask the user for the value of a placeholder in their legal document. Keep questions concise (under 20 words). Be direct and friendly. Do not include the placeholder syntax in your question.\n\nImportant: Pay attention to placeholder formatting:\n- Placeholders starting with $ (like $[___]) are typically dollar amounts\n- Placeholders with underscores (___) are typically amounts or blank fields\n- Placeholders in [brackets] are typically names, dates, or text values",
           },
           {
             role: "user",
-            content: `Generate a question to ask for this placeholder: "${placeholder}"\n\nDocument context (first 500 chars): ${documentContext?.substring(0, 500) || "Legal document"}`,
+            content: `Generate a question to ask for this placeholder: "${placeholder}"\n\nDocument context (first 500 chars): ${documentContext?.substring(0, 500) || "Legal document"}\n\nNote: If the placeholder starts with $ or contains only underscores, it's likely a monetary amount.`,
           },
         ],
         temperature: 0.7,

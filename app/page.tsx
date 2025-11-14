@@ -63,6 +63,7 @@ export default function Home() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [userApiKey, setUserApiKey] = useState("");
+  const [questionCache, setQuestionCache] = useState<Record<string, string>>({});
 
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
@@ -104,7 +105,62 @@ export default function Home() {
     return highlighted;
   }, [templateHtml, placeholders, answers]);
 
+  // Generate all questions at once (batch)
+  const generateAllQuestions = useCallback(async (placeholderList: string[]): Promise<Record<string, string>> => {
+    try {
+      const response = await fetch("/api/generate-questions-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          placeholders: placeholderList,
+          documentContext: templateText,
+          userApiKey: userApiKey || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate questions");
+      }
+
+      const data = await response.json();
+      const cache: Record<string, string> = {};
+      
+      // Handle both array and object responses
+      const questionsList = Array.isArray(data.questions) 
+        ? data.questions 
+        : Array.isArray(data) 
+          ? data 
+          : [];
+      
+      if (questionsList.length === 0) {
+        throw new Error("No questions returned from API");
+      }
+      
+      questionsList.forEach((q: { placeholder: string; question: string }) => {
+        cache[q.placeholder] = q.question;
+      });
+      
+      console.log(`Generated ${Object.keys(cache).length} questions in batch`);
+      return cache;
+    } catch (error) {
+      console.error("Error generating batch questions:", error);
+      // Fallback to simple questions
+      const cache: Record<string, string> = {};
+      placeholderList.forEach(p => {
+        const clean = p.replace(/^\$?\[|\]$/g, "").replace(/^\{|\}$/g, "").replace(/_+/g, "").trim() || "this value";
+        cache[p] = `What is the ${clean}?`;
+      });
+      return cache;
+    }
+  }, [templateText, userApiKey]);
+
   const generateQuestion = useCallback(async (placeholder: string): Promise<string> => {
+    // Check cache first
+    if (questionCache[placeholder]) {
+      return questionCache[placeholder];
+    }
+    
+    // Fallback to individual generation if not in cache
     try {
       // Call AI endpoint to generate contextual question
       const response = await fetch("/api/generate-question", {
@@ -160,8 +216,12 @@ export default function Home() {
 
       const extractedPlaceholders = extractPlaceholders(text);
       if (extractedPlaceholders.length > 0) {
-        // Show typing indicator, then first message
+        // Generate ALL questions at once (batch)
         setIsTyping(true);
+        
+        // Generate questions in background
+        const questionsPromise = generateAllQuestions(extractedPlaceholders);
+        
         setTimeout(async () => {
           setMessages([
             {
@@ -171,11 +231,13 @@ export default function Home() {
           ]);
           setIsTyping(false);
           
+          // Wait for questions to be generated
+          const generatedQuestions = await questionsPromise;
+          setQuestionCache(generatedQuestions);
+          
           // Show typing indicator again, then first question
-          setTimeout(async () => {
+          setTimeout(() => {
             setIsTyping(true);
-            // Generate AI question
-            const firstQuestion = await generateQuestion(extractedPlaceholders[0]);
             setTimeout(() => {
               setMessages([
                 {
@@ -184,7 +246,7 @@ export default function Home() {
                 },
                 {
                   role: "assistant",
-                  content: firstQuestion,
+                  content: generatedQuestions[extractedPlaceholders[0]] || `What is the ${extractedPlaceholders[0]}?`,
                 },
               ]);
               setIsTyping(false);
@@ -205,7 +267,7 @@ export default function Home() {
         }, 500);
       }
     },
-    [extractPlaceholders, generateQuestion],
+    [extractPlaceholders, generateAllQuestions],
   );
 
   const parseDocument = useCallback(
