@@ -60,6 +60,7 @@ export default function Home() {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
@@ -144,7 +145,7 @@ export default function Home() {
         setMessages([
           {
             role: "assistant",
-            content: "I didn't find any placeholders in this document. Placeholders should be formatted like [Company Name], $[Amount], {variable}, ___, or [ ]. You can upload a different document or download this one as-is.",
+            content: "⚠️ No placeholders detected in this document.\n\nFor best results, format placeholders like:\n• [Company Name]\n• $[Amount]\n• {variable}\n• ___ (3+ underscores)\n• [ ] (empty brackets)\n\nYou can:\n1. Upload a different document with placeholders\n2. Download this document as-is\n3. Edit your document to add placeholders and re-upload",
           },
         ]);
       }
@@ -178,7 +179,8 @@ export default function Home() {
         handleParsedDocument(file.name, data.templateHtml ?? "", data.templateText ?? "");
       } catch (error) {
         console.error(error);
-        setUploadError(error instanceof Error ? error.message : "Unexpected error");
+        const errorMessage = error instanceof Error ? error.message : "Unexpected error";
+        setUploadError(`${errorMessage}. Please ensure your file is a valid .docx document and try again. If the problem persists, try opening and re-saving the document in Microsoft Word.`);
       } finally {
         setIsParsing(false);
       }
@@ -388,9 +390,29 @@ export default function Home() {
             <div>
               <h1 className="text-4xl font-semibold tracking-tight" style={{ color: "var(--md-sys-color-on-background)" }}>Clausefill-AI</h1>
               <p className="mt-2 max-w-3xl text-base" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
-                Turn legal templates into guided conversations. Upload your .docx document, and I'll detect placeholders, 
-                ask you questions to fill them in, then generate a completed document ready to download.
+                <strong>Fill legal documents faster with AI-guided conversations.</strong> Upload your .docx template, 
+                answer questions in a chat, and download a perfectly formatted completed document.
               </p>
+              <div className="mt-4 flex flex-wrap gap-4 text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" style={{ color: "var(--md-sys-color-primary)" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Preserves formatting</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" style={{ color: "var(--md-sys-color-primary)" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>No data stored</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" style={{ color: "var(--md-sys-color-primary)" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Works in browser</span>
+                </div>
+              </div>
             </div>
             {documentMeta && (
               <div className="rounded-2xl px-4 py-3 text-sm" style={{ background: "var(--md-sys-color-surface-container-high)", border: "1px solid var(--md-sys-color-outline-variant)", color: "var(--md-sys-color-on-surface-variant)" }}>
@@ -401,6 +423,70 @@ export default function Home() {
             )}
           </div>
         </header>
+
+        {/* Instructions Panel */}
+        <div className="rounded-3xl border overflow-hidden" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
+          <button
+            onClick={() => setShowInstructions(!showInstructions)}
+            className="w-full flex items-center justify-between p-6 text-left transition"
+          >
+            <div>
+              <h2 className="text-lg font-semibold" style={{ color: "var(--md-sys-color-on-surface)" }}>
+                📖 How to Use Clausefill-AI
+              </h2>
+              <p className="text-sm mt-1" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
+                Click to {showInstructions ? "hide" : "view"} step-by-step instructions
+              </p>
+            </div>
+            <svg
+              className={`w-6 h-6 transition-transform ${showInstructions ? "rotate-180" : ""}`}
+              style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {showInstructions && (
+            <div className="px-6 pb-6 space-y-4 border-t" style={{ borderColor: "var(--md-sys-color-outline-variant)", color: "var(--md-sys-color-on-surface-variant)" }}>
+              <div className="grid md:grid-cols-3 gap-6 mt-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary)" }}>1</div>
+                    <h3 className="font-semibold" style={{ color: "var(--md-sys-color-on-surface)" }}>Upload Document</h3>
+                  </div>
+                  <p className="text-sm">Upload your .docx legal template. Make sure placeholders are formatted like [Company Name] or {`{variable}`}.</p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary)" }}>2</div>
+                    <h3 className="font-semibold" style={{ color: "var(--md-sys-color-on-surface)" }}>Answer Questions</h3>
+                  </div>
+                  <p className="text-sm">I'll ask you questions for each placeholder. Type your answers in the chat. You can type "skip" to skip any placeholder.</p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary)" }}>3</div>
+                    <h3 className="font-semibold" style={{ color: "var(--md-sys-color-on-surface)" }}>Download</h3>
+                  </div>
+                  <p className="text-sm">Review the filled document in the preview, then download your completed document with all formatting preserved.</p>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 rounded-xl" style={{ background: "var(--md-sys-color-surface-container-high)" }}>
+                <h4 className="font-semibold mb-2" style={{ color: "var(--md-sys-color-on-surface)" }}>✨ Supported Placeholder Formats:</h4>
+                <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                  <div>• <code className="px-2 py-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>[Company Name]</code></div>
+                  <div>• <code className="px-2 py-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>$[Amount]</code></div>
+                  <div>• <code className="px-2 py-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>{`{variable}`}</code></div>
+                  <div>• <code className="px-2 py-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>___</code> (3+ underscores)</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         <section className={`grid gap-8 ${templateHtml ? "lg:grid-cols-[minmax(0,320px),1fr,minmax(0,380px)]" : "lg:grid-cols-[minmax(0,360px),1fr]"}`}>
           <div className="space-y-6">

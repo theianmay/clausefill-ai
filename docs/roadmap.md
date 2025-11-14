@@ -117,16 +117,17 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
 
 Before sharing with unknown testers:
 
-- [ ] **Landing page clarity:**
-  - [ ] Clear value proposition visible immediately.
-  - [ ] Instructions on how to use the tool.
-  - [ ] Example placeholder formats shown.
+- [x] **Landing page clarity:**
+  - [x] Clear value proposition visible immediately.
+  - [x] Instructions on how to use the tool (collapsible panel).
+  - [x] Example placeholder formats shown.
+  - [x] Feature highlights (preserves formatting, no data stored, works in browser).
 - [ ] **Sample documents:**
   - [ ] Provide 2-3 downloadable sample legal documents (NDA, SAFE, employment offer).
   - [ ] Each with clear placeholder formats.
-- [ ] **Error recovery:**
-  - [ ] If no placeholders detected, suggest manual placeholder format.
-  - [ ] If parsing fails, provide clear next steps.
+- [x] **Error recovery:**
+  - [x] If no placeholders detected, suggest manual placeholder format with examples.
+  - [x] If parsing fails, provide clear next steps and recovery instructions.
 - [ ] **Performance:**
   - [ ] Test with 10+ page documents.
   - [ ] Ensure parsing completes within 5 seconds.
