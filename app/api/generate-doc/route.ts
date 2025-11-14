@@ -1,59 +1,76 @@
 import { NextResponse } from "next/server";
-import { Document, Packer, Paragraph, TextRun } from "docx";
+import Docxtemplater from "docxtemplater";
+import PizZip from "pizzip";
 
 export async function POST(request: Request) {
   try {
-    const { templateText, answers } = await request.json();
+    const { originalFileBase64, answers, originalFilename } = await request.json();
 
-    if (!templateText || typeof templateText !== "string") {
+    if (!originalFileBase64 || typeof originalFileBase64 !== "string") {
       return NextResponse.json(
-        { error: "Template text is required" },
+        { error: "Original file is required" },
         { status: 400 }
       );
     }
 
-    // Replace placeholders with answers
-    let filledText = templateText;
+    // Convert base64 back to buffer
+    const buffer = Buffer.from(originalFileBase64, "base64");
+
+    // Load the docx file as binary content
+    const zip = new PizZip(buffer);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    // Prepare data for replacement
+    // Convert placeholder keys to template-friendly format
+    const templateData: Record<string, string> = {};
     Object.entries(answers as Record<string, string>).forEach(([placeholder, value]) => {
-      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(escapedPlaceholder, "g");
-      filledText = filledText.replace(regex, value);
+      // Remove brackets and special chars to create clean keys
+      let cleanKey = placeholder
+        .replace(/^\$?\[|\]$/g, "") // Remove [ ] and $
+        .replace(/^\{|\}$/g, "") // Remove { }
+        .replace(/_{3,}/g, "") // Remove underscores
+        .trim()
+        .replace(/\s+/g, "_"); // Replace spaces with underscores
+
+      templateData[cleanKey] = value;
+      
+      // Also keep original placeholder as key for direct replacement
+      templateData[placeholder] = value;
     });
 
-    // Split text into paragraphs
-    const paragraphs = filledText.split("\n").map((line) => {
-      return new Paragraph({
-        children: [
-          new TextRun({
-            text: line,
-            size: 24, // 12pt font
-          }),
-        ],
-        spacing: {
-          after: 200, // spacing after paragraph
-        },
-      });
-    });
+    // Set the template data
+    doc.setData(templateData);
 
-    // Create document
-    const doc = new Document({
-      sections: [
-        {
-          properties: {},
-          children: paragraphs,
-        },
-      ],
-    });
+    try {
+      // Render the document (replace all placeholders)
+      doc.render();
+    } catch (error) {
+      console.error("Error rendering template:", error);
+      // If rendering fails, try simple text replacement as fallback
+      return NextResponse.json(
+        { error: "Unable to fill placeholders. The document format may not be compatible." },
+        { status: 500 }
+      );
+    }
 
-    // Generate buffer
-    const buffer = await Packer.toBuffer(doc);
+    // Generate the filled document
+    const filledBuffer = doc.getZip().generate({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+    }) as Buffer;
 
     // Return as downloadable file
-    return new NextResponse(Buffer.from(buffer), {
+    const filename = originalFilename || "document.docx";
+    const nameWithoutExt = filename.replace(/\.docx$/i, "");
+    
+    return new NextResponse(Buffer.from(filledBuffer), {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="completed-document-${Date.now()}.docx"`,
+        "Content-Disposition": `attachment; filename="${nameWithoutExt}-Clausefill.docx"`,
       },
     });
   } catch (error) {

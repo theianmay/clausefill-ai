@@ -74,11 +74,12 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
 - [x] Implement `/api/generate-doc`:
   - [x] Accept original template text and the `answers` map.
   - [x] Replace placeholders with the corresponding values, leaving unfilled ones visibly marked.
-  - [x] Use `docx` library to generate proper Word documents.
+  - [x] **CRITICAL FIX:** Use `docxtemplater` + `pizzip` to preserve original formatting.
+  - [x] Store original file buffer in client state.
   - [x] Generate a `.docx` and return as downloadable file.
 - [x] Add a "Download" button on the UI that calls this endpoint.
-- [x] Use a simple filename convention like `completed-document-{timestamp}.docx`.
-- [ ] **TESTING:** Verify with real legal documents that formatting is preserved.
+- [x] Use filename convention: `{original-name}-Clausefill.docx`.
+- [x] **TESTING:** Verify with real legal documents that formatting is preserved.
 
 ---
 

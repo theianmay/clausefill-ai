@@ -51,6 +51,7 @@ export default function Home() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [templateHtml, setTemplateHtml] = useState("");
   const [templateText, setTemplateText] = useState("");
+  const [originalFileBuffer, setOriginalFileBuffer] = useState<ArrayBuffer | null>(null);
   const [placeholders, setPlaceholders] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [documentMeta, setDocumentMeta] = useState<{ name: string; size: string } | null>(null);
@@ -155,6 +156,11 @@ export default function Home() {
     async (file: File) => {
       setIsParsing(true);
       setUploadError(null);
+      
+      // Store original file buffer for formatting preservation
+      const arrayBuffer = await file.arrayBuffer();
+      setOriginalFileBuffer(arrayBuffer);
+      
       const formData = new FormData();
       formData.append("file", file);
 
@@ -313,16 +319,30 @@ export default function Home() {
   }, [placeholders, currentPlaceholderIndex, messages, answers, generateQuestion]);
 
   const handleDownload = useCallback(async () => {
+    if (!originalFileBuffer) {
+      alert("Original document not available. Please upload a document first.");
+      return;
+    }
+
     setIsDownloading(true);
     try {
+      // Convert ArrayBuffer to base64
+      const base64 = btoa(
+        new Uint8Array(originalFileBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ""
+        )
+      );
+
       const response = await fetch("/api/generate-doc", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          templateText,
+          originalFileBase64: base64,
           answers,
+          originalFilename: documentMeta?.name || "document.docx",
         }),
       });
 
@@ -335,7 +355,12 @@ export default function Home() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `completed-document-${Date.now()}.docx`;
+      
+      // Generate filename with -Clausefill suffix
+      const originalName = documentMeta?.name || "document.docx";
+      const nameWithoutExt = originalName.replace(/\.docx$/i, "");
+      a.download = `${nameWithoutExt}-Clausefill.docx`;
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -346,7 +371,7 @@ export default function Home() {
     } finally {
       setIsDownloading(false);
     }
-  }, [templateText, answers]);
+  }, [originalFileBuffer, answers, documentMeta]);
 
   return (
     <div className="min-h-screen py-12" style={{ background: "var(--md-sys-color-background)", color: "var(--md-sys-color-on-background)" }}>
