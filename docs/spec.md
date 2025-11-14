@@ -2,7 +2,7 @@
 
 ## 1. Problem & Goal
 
-Clausefill-AI is a small web app that turns a legal template into a guided, conversational intake. It is built for startup legal workflows and aligns with Lexsy’s mission of delivering AI-assisted legal services.
+Clausefill-AI is a small web app that turns a legal template into a guided, conversational intake. It is built for startup legal workflows and aligns with the mission of delivering AI-assisted legal services.
 
 **Goal:** Provide an end-to-end experience where a user can:
 
