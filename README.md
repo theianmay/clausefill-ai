@@ -163,14 +163,6 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 - **[Future Enhancements](docs/future-enhancements.md)** - Planned improvements
 - **[Cost Protection](docs/cost-protection.md)** - Detailed cost analysis and protection measures
 
-## Contributing
-
-This is a portfolio project. Feel free to fork and adapt for your own use!
-
-## License
-
-MIT
-
 ## Support
 
 For questions or issues, please open an issue on GitHub.
