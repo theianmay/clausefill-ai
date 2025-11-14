@@ -62,6 +62,7 @@ export default function Home() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [userApiKey, setUserApiKey] = useState("");
 
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
@@ -103,24 +104,45 @@ export default function Home() {
     return highlighted;
   }, [templateHtml, placeholders, answers]);
 
-  const generateQuestion = useCallback((placeholder: string) => {
-    // Convert placeholder to a natural question
-    // e.g., "[Company Name]" -> "What is the Company Name?"
-    let cleanedPlaceholder = placeholder
-      .replace(/^\$?\[|\]$/g, "") // Remove brackets
-      .replace(/^\{|\}$/g, "") // Remove curly braces
-      .replace(/_+/g, "") // Remove underscores
-      .trim();
+  const generateQuestion = useCallback(async (placeholder: string): Promise<string> => {
+    try {
+      // Call AI endpoint to generate contextual question
+      const response = await fetch("/api/generate-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          placeholder,
+          documentContext: templateText,
+          userApiKey: userApiKey || undefined,
+        }),
+      });
 
-    if (!cleanedPlaceholder) {
-      cleanedPlaceholder = "this value";
+      if (!response.ok) {
+        throw new Error("Failed to generate question");
+      }
+
+      const data = await response.json();
+      return data.question;
+    } catch (error) {
+      console.error("Error generating question, using fallback:", error);
+      
+      // Fallback to deterministic question
+      let cleanedPlaceholder = placeholder
+        .replace(/^\$?\[|\]$/g, "")
+        .replace(/^\{|\}$/g, "")
+        .replace(/_+/g, "")
+        .trim();
+
+      if (!cleanedPlaceholder) {
+        cleanedPlaceholder = "this value";
+      }
+
+      return `What is the ${cleanedPlaceholder}?`;
     }
-
-    return `What is the ${cleanedPlaceholder}?`;
-  }, []);
+  }, [templateText, userApiKey]);
 
   const handleParsedDocument = useCallback(
-    (name: string, html: string, text: string) => {
+    async (name: string, html: string, text: string) => {
       setTemplateHtml(html);
       setTemplateText(text);
       setPlaceholders(extractPlaceholders(text));
@@ -131,7 +153,7 @@ export default function Home() {
       if (extractedPlaceholders.length > 0) {
         // Show typing indicator, then first message
         setIsTyping(true);
-        setTimeout(() => {
+        setTimeout(async () => {
           setMessages([
             {
               role: "assistant",
@@ -141,8 +163,10 @@ export default function Home() {
           setIsTyping(false);
           
           // Show typing indicator again, then first question
-          setTimeout(() => {
+          setTimeout(async () => {
             setIsTyping(true);
+            // Generate AI question
+            const firstQuestion = await generateQuestion(extractedPlaceholders[0]);
             setTimeout(() => {
               setMessages([
                 {
@@ -151,7 +175,7 @@ export default function Home() {
                 },
                 {
                   role: "assistant",
-                  content: generateQuestion(extractedPlaceholders[0]),
+                  content: firstQuestion,
                 },
               ]);
               setIsTyping(false);
@@ -294,8 +318,8 @@ export default function Home() {
     setUserInput("");
     setIsTyping(true);
 
-    // Simulate thinking delay (500ms)
-    setTimeout(() => {
+    // Simulate thinking delay, then generate AI question
+    setTimeout(async () => {
       const newMessages = [...messages, { role: "user" as const, content: userInput.trim() }];
 
       let newAnswers = answers;
@@ -316,10 +340,11 @@ export default function Home() {
       setCurrentPlaceholderIndex(nextIndex);
 
       if (nextIndex < placeholders.length) {
-        // Ask next question
+        // Generate AI question for next placeholder
+        const nextQuestion = await generateQuestion(placeholders[nextIndex]);
         newMessages.push({
           role: "assistant",
-          content: generateQuestion(placeholders[nextIndex]),
+          content: nextQuestion,
         });
       } else {
         // All done
@@ -335,9 +360,12 @@ export default function Home() {
     }, 500);
   }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion]);
 
-  const handleSkipPlaceholder = useCallback((placeholderToSkip: string) => {
+  const handleSkipPlaceholder = useCallback(async (placeholderToSkip: string) => {
     const indexToSkip = placeholders.indexOf(placeholderToSkip);
     if (indexToSkip === -1 || indexToSkip !== currentPlaceholderIndex) return;
+
+    // Show typing indicator
+    setIsTyping(true);
 
     // Add system message about skip
     const newMessages = [
@@ -353,10 +381,11 @@ export default function Home() {
     setCurrentPlaceholderIndex(nextIndex);
 
     if (nextIndex < placeholders.length) {
-      // Ask next question
+      // Generate AI question for next placeholder
+      const nextQuestion = await generateQuestion(placeholders[nextIndex]);
       newMessages.push({
         role: "assistant",
-        content: generateQuestion(placeholders[nextIndex]),
+        content: nextQuestion,
       });
     } else {
       // All done
@@ -368,6 +397,7 @@ export default function Home() {
     }
 
     setMessages(newMessages);
+    setIsTyping(false);
   }, [placeholders, currentPlaceholderIndex, messages, answers, generateQuestion]);
 
   const handleDownload = useCallback(async () => {
@@ -438,6 +468,22 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-2">
+              {/* Optional OpenAI API Key Input */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  placeholder="OpenAI API Key (optional)"
+                  value={userApiKey}
+                  onChange={(e) => setUserApiKey(e.target.value)}
+                  className="rounded-full px-4 py-2 text-sm w-48 transition"
+                  style={{ 
+                    background: "var(--md-sys-color-surface-container-high)", 
+                    color: "var(--md-sys-color-on-surface)",
+                    border: "1px solid var(--md-sys-color-outline-variant)"
+                  }}
+                  title="Add your OpenAI API key for AI-enhanced questions, or leave empty to use default"
+                />
+              </div>
               {templateHtml && (
                 <button
                   onClick={handleReset}

@@ -148,12 +148,57 @@ All critical features implemented and tested. App is production-ready at https:/
 
 ---
 
-## Stretch – AI-Enhanced Question Generation (Optional)
+## Phase 7 – AI-Enhanced Question Generation
 
-After the deterministic flow is stable, optionally layer in AI for nicer/semantic questions while keeping the deterministic fallback:
+Add OpenAI integration to generate contextual, natural questions instead of deterministic ones.
 
-- [ ] Add `/api/ask` endpoint:
-  - [ ] Input: `{ placeholders, history }`.
-  - [ ] If `OPENAI_API_KEY` is set, call an AI provider to generate the next question.
-  - [ ] If not set, fall back to deterministic question generation on the client.
-- [ ] Gate AI features behind environment config so the app remains fully functional without external services.
+### Setup & Configuration
+- [x] Install OpenAI SDK: `npm install openai`
+- [x] Support for user-provided API keys (in-app input field)
+- [x] Support for default API key via environment variable
+- [ ] Add `OPENAI_API_KEY` to `.env.local` for local development (optional)
+- [ ] Add `OPENAI_API_KEY` to Vercel environment variables for production (optional)
+- [x] Create `env.example` file documenting required environment variables
+
+### Backend Implementation
+- [x] Create `/api/generate-question/route.ts` endpoint:
+  - [x] Accept: `{ placeholder, documentContext, documentType? }`
+  - [x] Check if `OPENAI_API_KEY` exists
+  - [x] If API key exists:
+    - [x] Call OpenAI API (GPT-4o-mini for cost efficiency)
+    - [x] System prompt: "You are a helpful assistant for legal document filling. Generate a clear, professional question."
+    - [x] User prompt: Include placeholder name and document context
+    - [x] Return natural language question
+  - [x] If no API key or API fails:
+    - [x] Fallback to deterministic question generation
+    - [x] Return simple "What is the [placeholder]?" format
+  - [x] Add error handling and logging
+  - [x] Add rate limiting considerations (handled by OpenAI)
+
+### Frontend Integration
+- [x] Update `generateQuestion` function in `app/page.tsx`:
+  - [x] Make it async
+  - [x] Call `/api/generate-question` endpoint
+  - [x] Show loading state while waiting for AI response (typing indicator)
+  - [x] Handle errors gracefully with fallback
+- [x] Update `handleParsedDocument` to use async question generation
+- [x] Update `handleSubmitAnswer` to use async question generation
+- [x] Update `handleSkipPlaceholder` to use async question generation
+- [x] Ensure typing indicator shows during AI question generation
+
+### Testing & Polish
+- [ ] Test with API key present (AI-generated questions)
+- [ ] Test without API key (deterministic fallback)
+- [ ] Test API failure scenarios (network error, rate limit, etc.)
+- [ ] Verify questions are contextual and professional
+- [ ] Monitor API costs (should be ~$0.0001 per question)
+- [ ] Add optional document type detection for better context
+
+### Documentation
+- [ ] Update README with OpenAI setup instructions
+- [ ] Document environment variable requirements
+- [ ] Add note about optional AI features
+- [ ] Include cost estimates for AI usage
+
+**Estimated Effort:** 3-5 hours  
+**Cost Impact:** ~$0.01 per 100 questions (very cheap with GPT-4o-mini)

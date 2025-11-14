@@ -1,8 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clausefill-AI
+
+**AI-powered conversational document filling for legal templates.**
+
+Fill legal documents faster with AI-guided conversations. Upload your .docx template, answer questions in a chat, and download a perfectly formatted completed document.
+
+🔗 **Live App:** https://clausefill-ai.vercel.app/
+
+## Features
+
+- ✅ **Preserves formatting** - Original document structure maintained
+- ✅ **AI-enhanced questions** - Natural, contextual questions (optional)
+- ✅ **No data stored** - Everything processed in your browser
+- ✅ **Works offline** - No AI key required (uses deterministic fallback)
+- ✅ **Multiple placeholder formats** - `[brackets]`, `{curly}`, `$[amount]`, `___`
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+```bash
+npm install
+```
+
+### Optional: OpenAI Integration
+
+For AI-enhanced question generation, you have two options:
+
+#### Option 1: Use Your Own API Key (In-App)
+1. Get an API key from https://platform.openai.com/api-keys
+2. Enter it in the "OpenAI API Key" field in the app header
+3. Your key is only used for your session and never stored
+
+#### Option 2: Set a Default API Key (Server-Side)
+1. Get an API key from https://platform.openai.com/api-keys
+2. Create a `.env.local` file in the root directory:
+   ```
+   OPENAI_API_KEY=your_api_key_here
+   ```
+3. Restart the dev server
+4. All users will use this default key (unless they provide their own)
+
+**Note:** The app works perfectly without any API key using deterministic questions.
+
+### Run Development Server
 
 ```bash
 npm run dev
