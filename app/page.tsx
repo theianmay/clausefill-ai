@@ -61,6 +61,7 @@ export default function Home() {
   const [userInput, setUserInput] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
@@ -122,32 +123,53 @@ export default function Home() {
     (name: string, html: string, text: string) => {
       setTemplateHtml(html);
       setTemplateText(text);
-      const extractedPlaceholders = extractPlaceholders(text);
-      setPlaceholders(extractedPlaceholders);
+      setPlaceholders(extractPlaceholders(text));
       setDocumentMeta({ name, size: formatBytes(text.length * 2) });
       setLastUpdated(new Date().toLocaleTimeString());
-      setAnswers({});
-      setCurrentPlaceholderIndex(0);
 
-      // Start conversation if placeholders exist
+      const extractedPlaceholders = extractPlaceholders(text);
       if (extractedPlaceholders.length > 0) {
-        setMessages([
-          {
-            role: "assistant",
-            content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
-          },
-          {
-            role: "assistant",
-            content: generateQuestion(extractedPlaceholders[0]),
-          },
-        ]);
+        // Show typing indicator, then first message
+        setIsTyping(true);
+        setTimeout(() => {
+          setMessages([
+            {
+              role: "assistant",
+              content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
+            },
+          ]);
+          setIsTyping(false);
+          
+          // Show typing indicator again, then first question
+          setTimeout(() => {
+            setIsTyping(true);
+            setTimeout(() => {
+              setMessages([
+                {
+                  role: "assistant",
+                  content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
+                },
+                {
+                  role: "assistant",
+                  content: generateQuestion(extractedPlaceholders[0]),
+                },
+              ]);
+              setIsTyping(false);
+            }, 500);
+          }, 100);
+        }, 500);
       } else {
-        setMessages([
-          {
-            role: "assistant",
-            content: "⚠️ No placeholders detected in this document.\n\nFor best results, format placeholders like:\n• [Company Name]\n• $[Amount]\n• {variable}\n• ___ (3+ underscores)\n• [ ] (empty brackets)\n\nYou can:\n1. Upload a different document with placeholders\n2. Download this document as-is\n3. Edit your document to add placeholders and re-upload",
-          },
-        ]);
+        // Show typing indicator for no placeholders message
+        setIsTyping(true);
+        setTimeout(() => {
+          setMessages([
+            {
+              role: "assistant",
+              content: "⚠️ No placeholders detected in this document.\n\nFor best results, format placeholders like:\n• [Company Name]\n• $[Amount]\n• {variable}\n• ___ (3+ underscores)\n• [ ] (empty brackets)\n\nYou can:\n1. Upload a different document with placeholders\n2. Download this document as-is\n3. Edit your document to add placeholders and re-upload",
+            },
+          ]);
+          setIsTyping(false);
+        }, 500);
       }
     },
     [extractPlaceholders, generateQuestion],
@@ -264,47 +286,53 @@ export default function Home() {
     const currentPlaceholder = placeholders[currentPlaceholderIndex];
     const isSkip = userInput.trim().toLowerCase() === "skip";
     
-    // Add user message
-    const newMessages = [
+    // Add user message and show typing indicator
+    setMessages([
       ...messages,
       { role: "user" as const, content: userInput.trim() },
-    ];
-
-    let newAnswers = answers;
-    if (!isSkip) {
-      // Only save answer if not skipping
-      newAnswers = { ...answers, [currentPlaceholder]: userInput.trim() };
-      setAnswers(newAnswers);
-    } else {
-      // Acknowledge skip
-      newMessages.push({
-        role: "assistant",
-        content: `Skipped "${currentPlaceholder}". Moving to the next one.`,
-      });
-    }
-
+    ]);
     setUserInput("");
+    setIsTyping(true);
 
-    // Move to next placeholder
-    const nextIndex = currentPlaceholderIndex + 1;
-    setCurrentPlaceholderIndex(nextIndex);
+    // Simulate thinking delay (500ms)
+    setTimeout(() => {
+      const newMessages = [...messages, { role: "user" as const, content: userInput.trim() }];
 
-    if (nextIndex < placeholders.length) {
-      // Ask next question
-      newMessages.push({
-        role: "assistant",
-        content: generateQuestion(placeholders[nextIndex]),
-      });
-    } else {
-      // All done
-      const filledCount = Object.keys(newAnswers).length;
-      newMessages.push({
-        role: "assistant",
-        content: `Done! I've filled ${filledCount} of ${placeholders.length} placeholders. You can now review the completed document and download it.`,
-      });
-    }
+      let newAnswers = answers;
+      if (!isSkip) {
+        // Only save answer if not skipping
+        newAnswers = { ...answers, [currentPlaceholder]: userInput.trim() };
+        setAnswers(newAnswers);
+      } else {
+        // Acknowledge skip
+        newMessages.push({
+          role: "assistant",
+          content: `Skipped "${currentPlaceholder}". Moving to the next one.`,
+        });
+      }
 
-    setMessages(newMessages);
+      // Move to next placeholder
+      const nextIndex = currentPlaceholderIndex + 1;
+      setCurrentPlaceholderIndex(nextIndex);
+
+      if (nextIndex < placeholders.length) {
+        // Ask next question
+        newMessages.push({
+          role: "assistant",
+          content: generateQuestion(placeholders[nextIndex]),
+        });
+      } else {
+        // All done
+        const filledCount = Object.keys(newAnswers).length;
+        newMessages.push({
+          role: "assistant",
+          content: `Done! I've filled ${filledCount} of ${placeholders.length} placeholders. You can now review the completed document and download it.`,
+        });
+      }
+
+      setMessages(newMessages);
+      setIsTyping(false);
+    }, 500);
   }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion]);
 
   const handleSkipPlaceholder = useCallback((placeholderToSkip: string) => {
@@ -755,6 +783,23 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div
+                      className="max-w-[85%] rounded-2xl px-4 py-3 flex items-center gap-1"
+                      style={{
+                        background: "var(--md-sys-color-surface-container-high)",
+                        color: "var(--md-sys-color-on-surface)"
+                      }}
+                    >
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: "var(--md-sys-color-on-surface)", animationDelay: "0ms" }}></span>
+                        <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: "var(--md-sys-color-on-surface)", animationDelay: "150ms" }}></span>
+                        <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: "var(--md-sys-color-on-surface)", animationDelay: "300ms" }}></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 

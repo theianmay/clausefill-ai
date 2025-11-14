@@ -108,9 +108,11 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
   - [x] Change download button to success green (was red/tertiary).
   - [x] Add skip placeholder functionality (type 'skip' or click button in sidebar).
   - [x] Add reset button to clear document and start fresh without page refresh.
+  - [x] Add typing indicator animation (three bouncing dots) with 500ms delay.
+  - [x] **CRITICAL FIX:** Proper XML paragraph-level replacement to preserve formatting with any placeholder format.
 - [x] Smoke test full flow with sample documents.
 - [x] **DEPLOYMENT:** Deploy to Vercel for public URL access (https://clausefill-ai.vercel.app/).
-- [ ] **REAL-WORLD TEST:** Test with actual legal documents (NDA, employment agreement, etc.).
+- [x] **REAL-WORLD TEST:** Test with actual legal documents (SAFE agreement with 8 placeholders - SUCCESS!).
 
 ---
 
