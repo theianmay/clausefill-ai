@@ -98,7 +98,7 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
 - [x] Loading states (download button, parsing indicator).
 - [x] Keyboard accessibility (Enter to submit, autofocus).
 - [ ] Smoke test full flow with sample documents.
-- [ ] **DEPLOYMENT:** Deploy to Vercel/Netlify for public URL access.
+- [ ] **DEPLOYMENT:** Deploy to Vercel for public URL access.
 - [ ] **REAL-WORLD TEST:** Test with actual legal documents (NDA, employment agreement, etc.).
 
 ---

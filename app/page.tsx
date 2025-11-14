@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 // Enhanced regex to match common placeholder patterns:
 // - [Company Name], $[Amount], {variable}
