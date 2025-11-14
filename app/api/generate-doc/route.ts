@@ -18,11 +18,7 @@ export async function POST(request: Request) {
 
     // Load the docx file as binary content
     const zip = new PizZip(buffer);
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-    });
-
+    
     // Prepare data for replacement
     // Convert placeholder keys to template-friendly format
     const templateData: Record<string, string> = {};
@@ -41,12 +37,14 @@ export async function POST(request: Request) {
       templateData[placeholder] = value;
     });
 
-    // Set the template data
-    doc.setData(templateData);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
 
+    // Use render() with data directly (new API)
     try {
-      // Render the document (replace all placeholders)
-      doc.render();
+      doc.render(templateData);
     } catch (error) {
       console.error("Error rendering template:", error);
       // If rendering fails, try simple text replacement as fallback
