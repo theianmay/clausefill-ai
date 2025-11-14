@@ -90,6 +90,11 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
   - [x] No placeholders detected with helpful guidance.
   - [x] Large files (>4MB) with helpful guidance.
 - [x] Responsive layout and basic accessibility checks.
+- [x] **MD3 DESIGN SYSTEM:** Implement Material Design 3 color scheme with dark theme default.
+  - [x] MD3 color variables for light and dark themes.
+  - [x] Theme toggle component with localStorage persistence.
+  - [x] All UI components updated to use MD3 colors.
+  - [x] Smooth theme transitions.
 - [x] Copy polish (helper text around upload, placeholders, and conversation).
 - [x] **USER GUIDANCE:** Add help section explaining:
   - [x] Supported placeholder formats with examples.
@@ -98,7 +103,7 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
 - [x] Loading states (download button, parsing indicator).
 - [x] Keyboard accessibility (Enter to submit, autofocus).
 - [ ] Smoke test full flow with sample documents.
-- [ ] **DEPLOYMENT:** Deploy to Vercel for public URL access.
+- [x] **DEPLOYMENT:** Deploy to Vercel for public URL access (https://clausefill-ai.vercel.app/).
 - [ ] **REAL-WORLD TEST:** Test with actual legal documents (NDA, employment agreement, etc.).
 
 ---

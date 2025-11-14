@@ -295,26 +295,29 @@ export default function Home() {
   }, [templateText, answers]);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 text-slate-900">
+    <div className="min-h-screen py-12" style={{ background: "var(--md-sys-color-background)", color: "var(--md-sys-color-on-background)" }}>
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6">
         <header className="space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
-            <span>Project status</span>
-            <span className="text-emerald-600">Phase 5: Polished & Ready</span>
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--md-sys-color-surface-container)", color: "var(--md-sys-color-on-surface-variant)" }}>
+              <span>Project status</span>
+              <span style={{ color: "var(--md-sys-color-tertiary)" }}>Phase 5: Polished & Ready</span>
+            </div>
+            <ThemeToggle />
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-4xl font-semibold tracking-tight text-slate-900">Clausefill-AI</h1>
-              <p className="mt-2 max-w-3xl text-base text-slate-600">
+              <h1 className="text-4xl font-semibold tracking-tight" style={{ color: "var(--md-sys-color-on-background)" }}>Clausefill-AI</h1>
+              <p className="mt-2 max-w-3xl text-base" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 Turn legal templates into guided conversations. Upload your .docx document, and I'll detect placeholders, 
                 ask you questions to fill them in, then generate a completed document ready to download.
               </p>
             </div>
             {documentMeta && (
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-                <p className="font-medium text-slate-900">Current document</p>
+              <div className="rounded-2xl px-4 py-3 text-sm" style={{ background: "var(--md-sys-color-surface-container-high)", border: "1px solid var(--md-sys-color-outline-variant)", color: "var(--md-sys-color-on-surface-variant)" }}>
+                <p className="font-medium" style={{ color: "var(--md-sys-color-on-surface)" }}>Current document</p>
                 <p>{documentMeta.name}</p>
-                <p className="text-xs text-slate-500">Updated {lastUpdated || "just now"}</p>
+                <p className="text-xs" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>Updated {lastUpdated || "just now"}</p>
               </div>
             )}
           </div>
@@ -322,8 +325,8 @@ export default function Home() {
 
         <section className={`grid gap-8 ${templateHtml ? "lg:grid-cols-[minmax(0,320px),1fr,minmax(0,380px)]" : "lg:grid-cols-[minmax(0,360px),1fr]"}`}>
           <div className="space-y-6">
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-3xl border border-dashed p-6 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
+              <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 Document uploader
               </p>
               <label
@@ -334,13 +337,12 @@ export default function Home() {
                 }}
                 onDragLeave={() => setIsDragActive(false)}
                 onDrop={handleDrop}
-                className={`mt-4 flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 text-center transition
-                  ${
-                    isDragActive
-                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                      : "border-slate-200 bg-slate-50 text-slate-500"
-                  }
-                `}
+                className="mt-4 flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 text-center transition"
+                style={{
+                  background: isDragActive ? "var(--md-sys-color-primary-container)" : "var(--md-sys-color-surface-container-high)",
+                  borderColor: isDragActive ? "var(--md-sys-color-primary)" : "var(--md-sys-color-outline)",
+                  color: isDragActive ? "var(--md-sys-color-on-primary-container)" : "var(--md-sys-color-on-surface-variant)"
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -356,8 +358,8 @@ export default function Home() {
                     d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
                   />
                 </svg>
-                <p className="text-base font-medium text-slate-900">Drag &amp; drop your .docx</p>
-                <p className="text-sm text-slate-500">or click to choose a file up to 4&nbsp;MB</p>
+                <p className="text-base font-medium" style={{ color: "var(--md-sys-color-on-surface)" }}>Drag &amp; drop your .docx</p>
+                <p className="text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>or click to choose a file up to 4&nbsp;MB</p>
                 <input
                   ref={fileInputRef}
                   id="document-upload"
@@ -367,85 +369,87 @@ export default function Home() {
                   onChange={handleInputChange}
                 />
               </label>
-              <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
+              <div className="mt-4 flex items-center justify-between text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 <p>Supported format: .docx (Word)</p>
                 <button
                   type="button"
-                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
+                  className="text-sm font-semibold transition"
+                  style={{ color: "var(--md-sys-color-primary)" }}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Browse files
                 </button>
               </div>
               {uploadError && (
-                <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <p className="mt-4 rounded-xl border px-3 py-2 text-sm" style={{ background: "var(--md-sys-color-error-container)", borderColor: "var(--md-sys-color-error)", color: "var(--md-sys-color-on-error-container)" }}>
                   {uploadError}
                 </p>
               )}
               {isParsing && (
-                <p className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+                <p className="mt-4 rounded-xl border px-3 py-2 text-sm" style={{ background: "var(--md-sys-color-primary-container)", borderColor: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary-container)" }}>
                   Parsing document…
                 </p>
               )}
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-3xl border p-6 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
+              <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 Quick start
               </p>
-              <p className="mt-2 text-sm text-slate-600">No .docx handy? Load a ready-made SAFE sample to try it out.</p>
+              <p className="mt-2 text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>No .docx handy? Load a ready-made SAFE sample to try it out.</p>
               <button
                 type="button"
                 onClick={applySampleDocument}
-                className="mt-4 w-full rounded-2xl border border-indigo-200 bg-indigo-50 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                className="mt-4 w-full rounded-2xl border py-3 text-sm font-semibold transition"
+                style={{ background: "var(--md-sys-color-primary-container)", borderColor: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary-container)" }}
               >
                 Use sample document
               </button>
-              <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-                <p className="font-semibold text-slate-700 mb-1">Supported placeholder formats:</p>
+              <div className="mt-4 rounded-xl p-3 text-xs" style={{ background: "var(--md-sys-color-surface-container-high)", color: "var(--md-sys-color-on-surface-variant)" }}>
+                <p className="font-semibold mb-1" style={{ color: "var(--md-sys-color-on-surface)" }}>Supported placeholder formats:</p>
                 <ul className="space-y-0.5 ml-3">
-                  <li>• Square brackets: <code className="bg-white px-1 rounded">[Company Name]</code></li>
-                  <li>• With dollar sign: <code className="bg-white px-1 rounded">$[Amount]</code></li>
-                  <li>• Curly braces: <code className="bg-white px-1 rounded">{`{variable}`}</code></li>
-                  <li>• Underscores: <code className="bg-white px-1 rounded">___</code></li>
-                  <li>• Empty brackets: <code className="bg-white px-1 rounded">[ ]</code></li>
+                  <li>• Square brackets: <code className="px-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>[Company Name]</code></li>
+                  <li>• With dollar sign: <code className="px-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>$[Amount]</code></li>
+                  <li>• Curly braces: <code className="px-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>{`{variable}`}</code></li>
+                  <li>• Underscores: <code className="px-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>___</code></li>
+                  <li>• Empty brackets: <code className="px-1 rounded" style={{ background: "var(--md-sys-color-surface-container-highest)" }}>[ ]</code></li>
                 </ul>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-3xl border p-6 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
+              <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 Parse summary
               </p>
-              <dl className="mt-4 space-y-3 text-sm text-slate-600">
+              <dl className="mt-4 space-y-3 text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 <div className="flex items-center justify-between">
                   <dt>Document</dt>
-                  <dd className="font-medium text-slate-900">{documentMeta?.name ?? "—"}</dd>
+                  <dd className="font-medium" style={{ color: "var(--md-sys-color-on-surface)" }}>{documentMeta?.name ?? "—"}</dd>
                 </div>
                 <div className="flex items-center justify-between">
                   <dt>Size</dt>
-                  <dd className="font-medium text-slate-900">{documentMeta?.size ?? "—"}</dd>
+                  <dd className="font-medium" style={{ color: "var(--md-sys-color-on-surface)" }}>{documentMeta?.size ?? "—"}</dd>
                 </div>
                 <div className="flex items-center justify-between">
                   <dt>Placeholders</dt>
-                  <dd className="font-medium text-slate-900">{placeholderBadge}</dd>
+                  <dd className="font-medium" style={{ color: "var(--md-sys-color-on-surface)" }}>{placeholderBadge}</dd>
                 </div>
               </dl>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-3xl border p-6 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
+              <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                 Detected placeholders
               </p>
-              <div className="mt-3 space-y-2 text-sm text-slate-700">
+              <div className="mt-3 space-y-2 text-sm" style={{ color: "var(--md-sys-color-on-surface)" }}>
                 {placeholders.length ? (
-                  <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50">
+                  <ul className="divide-y rounded-2xl border" style={{ background: "var(--md-sys-color-surface-container-high)", borderColor: "var(--md-sys-color-outline-variant)" }}>
                     {placeholders.map((placeholder) => {
                       const isFilled = answers[placeholder] !== undefined;
                       return (
                         <li key={placeholder} className="flex items-center justify-between px-4 py-2">
-                          <span className="font-mono text-xs text-slate-500">{placeholder}</span>
-                          <span className={isFilled ? "text-emerald-600" : "text-amber-600"}>
+                          <span className="font-mono text-xs" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>{placeholder}</span>
+                          <span style={{ color: isFilled ? "var(--md-sys-color-tertiary)" : "var(--md-sys-color-secondary)" }}>
                             {isFilled ? "Filled" : "Pending"}
                           </span>
                         </li>
@@ -453,29 +457,29 @@ export default function Home() {
                     })}
                   </ul>
                 ) : (
-                  <p className="text-slate-500">Placeholder keys will appear after parsing.</p>
+                  <p style={{ color: "var(--md-sys-color-on-surface-variant)" }}>Placeholder keys will appear after parsing.</p>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="rounded-3xl border p-8 shadow-sm" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                   Document preview
                 </p>
-                <p className="text-sm text-slate-500">Rendered directly from the parsed HTML</p>
+                <p className="text-sm" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>Rendered directly from the parsed HTML</p>
               </div>
               {templateText && (
-                <p className="text-xs text-slate-400">{templateText.split(" ").length} words</p>
+                <p className="text-xs" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>{templateText.split(" ").length} words</p>
               )}
             </div>
-            <div className="mt-6 h-[560px] overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50 p-6 text-base leading-relaxed text-slate-800">
+            <div className="mt-6 h-[560px] overflow-y-auto rounded-2xl border p-6 text-base leading-relaxed" style={{ background: "var(--md-sys-color-surface-container-high)", borderColor: "var(--md-sys-color-outline-variant)", color: "var(--md-sys-color-on-surface)" }}>
               {highlightedHtml ? (
                 <article className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
               ) : (
-                <div className="flex h-full flex-col items-center justify-center text-center text-slate-400">
+                <div className="flex h-full flex-col items-center justify-center text-center" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                   <p className="text-base font-medium">Upload a document to see it here</p>
                   <p className="mt-2 text-sm">Your parsed, scrollable preview will appear in this panel.</p>
                 </div>
@@ -484,19 +488,19 @@ export default function Home() {
           </div>
 
           {templateHtml && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col h-[calc(100vh-200px)] max-h-[800px]">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+            <div className="rounded-3xl border p-6 shadow-sm flex flex-col h-[calc(100vh-200px)] max-h-[800px]" style={{ background: "var(--md-sys-color-surface-container)", borderColor: "var(--md-sys-color-outline-variant)" }}>
+              <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "var(--md-sys-color-outline-variant)" }}>
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                     Conversational Fill
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs mt-1" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                     {currentPlaceholderIndex < placeholders.length
                       ? `${currentPlaceholderIndex + 1} of ${placeholders.length}`
                       : "Complete"}
                   </p>
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>
                   {Object.keys(answers).length}/{placeholders.length} filled
                 </div>
               </div>
@@ -508,11 +512,11 @@ export default function Home() {
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                        message.role === "user"
-                          ? "bg-indigo-600 text-white"
-                          : "bg-slate-100 text-slate-900"
-                      }`}
+                      className="max-w-[85%] rounded-2xl px-4 py-3"
+                      style={{
+                        background: message.role === "user" ? "var(--md-sys-color-primary)" : "var(--md-sys-color-surface-container-high)",
+                        color: message.role === "user" ? "var(--md-sys-color-on-primary)" : "var(--md-sys-color-on-surface)"
+                      }}
                     >
                       <p className="text-sm leading-relaxed">{message.content}</p>
                     </div>
@@ -521,7 +525,7 @@ export default function Home() {
               </div>
 
               {currentPlaceholderIndex < placeholders.length && (
-                <div className="border-t border-slate-200 pt-4">
+                <div className="border-t pt-4" style={{ borderColor: "var(--md-sys-color-outline-variant)" }}>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -535,13 +539,15 @@ export default function Home() {
                       onChange={(e) => setUserInput(e.target.value)}
                       placeholder="Type your answer..."
                       autoFocus
-                      className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className="flex-1 rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                      style={{ background: "var(--md-sys-color-surface-container-high)", borderColor: "var(--md-sys-color-outline)", color: "var(--md-sys-color-on-surface)" }}
                       aria-label="Answer input"
                     />
                     <button
                       type="submit"
                       disabled={!userInput.trim()}
-                      className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="rounded-xl px-6 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ background: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary)" }}
                     >
                       Send
                     </button>
@@ -551,12 +557,13 @@ export default function Home() {
 
               {((currentPlaceholderIndex >= placeholders.length && placeholders.length > 0) || 
                 (placeholders.length === 0 && templateHtml)) && (
-                <div className="border-t border-slate-200 pt-4">
+                <div className="border-t pt-4" style={{ borderColor: "var(--md-sys-color-outline-variant)" }}>
                   <button
                     type="button"
                     onClick={handleDownload}
                     disabled={isDownloading}
-                    className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full rounded-xl px-6 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    style={{ background: "var(--md-sys-color-tertiary)", color: "var(--md-sys-color-on-tertiary)" }}
                   >
                     {isDownloading ? (
                       <>
@@ -576,10 +583,10 @@ export default function Home() {
           )}
         </section>
 
-        <footer className="mt-12 border-t border-slate-200 pt-8 text-center text-sm text-slate-500">
+        <footer className="mt-12 border-t pt-8 text-center text-sm" style={{ borderColor: "var(--md-sys-color-outline-variant)", color: "var(--md-sys-color-on-surface-variant)" }}>
           <div className="space-y-2">
             <p>
-              <strong className="text-slate-700">How it works:</strong> Upload a .docx template → 
+              <strong style={{ color: "var(--md-sys-color-on-surface)" }}>How it works:</strong> Upload a .docx template → 
               Placeholders are detected → Answer questions conversationally → Download completed document
             </p>
             <p className="text-xs">
