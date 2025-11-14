@@ -235,12 +235,16 @@ Return ONLY the JSON array, no other text.`,
         questions = parsed;
       } else if (parsed.questions && Array.isArray(parsed.questions)) {
         questions = parsed.questions;
+      } else if (parsed.placeholders && Array.isArray(parsed.placeholders)) {
+        // AI sometimes returns "placeholders" instead of "questions"
+        questions = parsed.placeholders;
       } else if (typeof parsed === 'object') {
         // Try to extract from any array property
         const arrayProp = Object.values(parsed).find(v => Array.isArray(v));
         if (arrayProp && Array.isArray(arrayProp)) {
           questions = arrayProp as PlaceholderGroup[];
         } else {
+          console.error("Parsed object:", parsed);
           throw new Error("No questions array found in response");
         }
       } else {

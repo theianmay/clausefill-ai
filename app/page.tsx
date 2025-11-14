@@ -208,12 +208,14 @@ export default function Home() {
 
   const generateQuestion = useCallback(async (placeholder: string): Promise<string> => {
     // Check cache first
+    console.log(`Looking for "${placeholder}" in cache. Cache has ${Object.keys(questionCache).length} keys:`, Object.keys(questionCache));
+    
     if (questionCache[placeholder]) {
-      console.log(`Using cached question for: ${placeholder}`);
+      console.log(`✓ Using cached question for: ${placeholder}`);
       return questionCache[placeholder];
     }
     
-    console.log(`Cache miss for: ${placeholder}, generating individually...`);
+    console.log(`✗ Cache miss for: ${placeholder}, generating individually...`);
     
     // Fallback to individual generation if not in cache
     try {
@@ -410,9 +412,18 @@ export default function Home() {
     [handleFile],
   );
 
-  const applySampleDocument = useCallback(() => {
-    handleParsedDocument("Sample SAFE Template.docx", sampleTemplateHtml, sampleTemplateText);
-    setUploadError(null);
+  const handleUseSample = useCallback(async () => {
+    // For sample document, we need to create a basic .docx buffer
+    // Since we don't have the original file, we'll create a simple one
+    try {
+      // Fetch a basic SAFE template or create a minimal docx
+      // For now, we'll just disable download for sample docs
+      setOriginalFileBuffer(null);
+      
+      handleParsedDocument("Sample SAFE Agreement", sampleTemplateHtml, sampleTemplateText);
+    } catch (error) {
+      console.error("Error loading sample:", error);
+    }
   }, [handleParsedDocument]);
 
   const handleReset = useCallback(() => {
@@ -536,7 +547,7 @@ export default function Home() {
 
   const handleDownload = useCallback(async () => {
     if (!originalFileBuffer) {
-      alert("Original document not available. Please upload a document first.");
+      alert("Download is only available for uploaded documents. The sample document is for demonstration purposes only. Please upload your own .docx file to download a filled version.");
       return;
     }
 
@@ -830,7 +841,7 @@ export default function Home() {
               {!templateHtml ? (
                 <button
                   type="button"
-                  onClick={applySampleDocument}
+                  onClick={handleUseSample}
                   className="mt-4 w-full rounded-2xl border py-3 text-sm font-semibold transition"
                   style={{ background: "var(--md-sys-color-primary-container)", borderColor: "var(--md-sys-color-primary)", color: "var(--md-sys-color-on-primary-container)" }}
                 >
