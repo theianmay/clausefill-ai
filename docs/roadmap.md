@@ -33,12 +33,12 @@ This roadmap is focused on **execution** and is meant to be extended as the proj
   - [x] Bracketed blanks like `$[_____________]`.
   - [x] (Optional) curly-braced tokens like `{company_name}`.
 - [x] Deduplicate placeholders and store them as a list of keys.
-- [ ] Highlight placeholders in the preview (e.g. colored spans with background color).
+- [x] Highlight placeholders in the preview (e.g. colored spans with background color).
 - [x] Show a sidebar or panel listing all detected placeholders and their fill status.
-- [ ] **CRITICAL FOR REAL DOCS:** Add support for additional common patterns:
-  - [ ] Standalone underscores: `_________` (minimum 3+ underscores)
-  - [ ] Empty brackets: `[ ]` or `[  ]`
-  - [ ] Placeholder indicators: `[TBD]`, `[INSERT]`, `[FILL IN]`
+- [x] **CRITICAL FOR REAL DOCS:** Add support for additional common patterns:
+  - [x] Standalone underscores: `_________` (minimum 3+ underscores)
+  - [x] Empty brackets: `[ ]` or `[  ]`
+  - [x] Placeholder indicators: `[TBD]`, `[INSERT]`, `[FILL IN]`
 
 ---
 
@@ -46,24 +46,24 @@ This roadmap is focused on **execution** and is meant to be extended as the proj
 
 Implement a **scripted, state-driven chat experience** that walks through placeholders one by one.
 
-- [ ] Define client-side state:
-  - [ ] `placeholders: string[]`
-  - [ ] `answers: Record<string, string>`
-  - [ ] `messages: { role: 'user' | 'assistant'; content: string }[]`
-  - [ ] `currentPlaceholderIndex: number`
-- [ ] Conversation logic:
-  - [ ] After parsing, initialize `placeholders` and `currentPlaceholderIndex = 0`.
-  - [ ] Append an assistant message introducing the flow.
-  - [ ] For the current placeholder, generate a deterministic question, e.g.:
+- [x] Define client-side state:
+  - [x] `placeholders: string[]`
+  - [x] `answers: Record<string, string>`
+  - [x] `messages: { role: 'user' | 'assistant'; content: string }[]`
+  - [x] `currentPlaceholderIndex: number`
+- [x] Conversation logic:
+  - [x] After parsing, initialize `placeholders` and `currentPlaceholderIndex = 0`.
+  - [x] Append an assistant message introducing the flow.
+  - [x] For the current placeholder, generate a deterministic question, e.g.:
         `"What is the Company Name?"` from `[Company Name]`.
-  - [ ] On user answer:
-    - [ ] Store value in `answers[key]`.
-    - [ ] Append user message to `messages`.
-    - [ ] Re-render preview with updated values.
-    - [ ] Increment `currentPlaceholderIndex` and ask the next question.
-  - [ ] When all placeholders are filled, append a final assistant message and enable download.
-- [ ] UI polish:
-  - [ ] Chat bubble styling (assistant vs user).
+  - [x] On user answer:
+    - [x] Store value in `answers[key]`.
+    - [x] Append user message to `messages`.
+    - [x] Re-render preview with updated values.
+    - [x] Increment `currentPlaceholderIndex` and ask the next question.
+  - [x] When all placeholders are filled, append a final assistant message and enable download.
+- [x] UI polish:
+  - [x] Chat bubble styling (assistant vs user).
   - [ ] Basic typing indicator / loading affordance.
   - [ ] Allow jumping to a placeholder by clicking it in the sidebar and editing the answer.
 

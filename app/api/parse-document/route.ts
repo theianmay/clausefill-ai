@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 
 function extractPlaceholders(text: string): string[] {
-  const placeholderRegex = /\$?\[[^\]]+\]|\{[^}]+\}/g;
+  // Enhanced regex to match common placeholder patterns:
+  // - [Company Name], $[Amount], {variable}
+  // - Standalone underscores: ___ (3+)
+  // - Empty brackets: [ ], [  ]
+  // - Common indicators: [TBD], [INSERT], [FILL IN]
+  const placeholderRegex = /\$?\[[^\]]*\]|\{[^}]+\}|_{3,}|\[TBD\]|\[INSERT\]|\[FILL IN\]/gi;
   const matches = text.match(placeholderRegex) ?? [];
   const unique = new Set<string>();
 

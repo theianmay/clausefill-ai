@@ -2,7 +2,12 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
-const PLACEHOLDER_REGEX = /\$?\[[^\]]+\]|\{[^}]+\}/g;
+// Enhanced regex to match common placeholder patterns:
+// - [Company Name], $[Amount], {variable}
+// - Standalone underscores: ___ (3+)
+// - Empty brackets: [ ], [  ]
+// - Common indicators: [TBD], [INSERT], [FILL IN]
+const PLACEHOLDER_REGEX = /\$?\[[^\]]*\]|\{[^}]+\}|_{3,}|\[TBD\]|\[INSERT\]|\[FILL IN\]/gi;
 const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB limit for Vercel serverless
 
 const sampleTemplateText = `SAFE Agreement
@@ -45,8 +50,12 @@ export default function Home() {
   const [templateHtml, setTemplateHtml] = useState("");
   const [templateText, setTemplateText] = useState("");
   const [placeholders, setPlaceholders] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [documentMeta, setDocumentMeta] = useState<{ name: string; size: string } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [userInput, setUserInput] = useState("");
 
   const placeholderBadge = useMemo(() => {
     if (!placeholders.length) return "No placeholders detected yet";
@@ -58,15 +67,80 @@ export default function Home() {
     return Array.from(new Set(matches.map((match) => match.trim())));
   }, []);
 
+  const highlightedHtml = useMemo(() => {
+    if (!templateHtml) return "";
+    
+    let highlighted = templateHtml;
+    
+    // Replace each placeholder with a highlighted version
+    placeholders.forEach((placeholder) => {
+      const isFilled = answers[placeholder] !== undefined;
+      const displayValue = isFilled ? answers[placeholder] : placeholder;
+      const bgColor = isFilled ? "bg-emerald-100" : "bg-amber-100";
+      const textColor = isFilled ? "text-emerald-900" : "text-amber-900";
+      
+      // Escape special regex characters in placeholder
+      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedPlaceholder, "g");
+      
+      highlighted = highlighted.replace(
+        regex,
+        `<mark class="px-1 py-0.5 rounded ${bgColor} ${textColor} font-medium">${displayValue}</mark>`
+      );
+    });
+    
+    return highlighted;
+  }, [templateHtml, placeholders, answers]);
+
+  const generateQuestion = useCallback((placeholder: string) => {
+    // Convert placeholder to a natural question
+    // e.g., "[Company Name]" -> "What is the Company Name?"
+    let cleanedPlaceholder = placeholder
+      .replace(/^\$?\[|\]$/g, "") // Remove brackets
+      .replace(/^\{|\}$/g, "") // Remove curly braces
+      .replace(/_+/g, "") // Remove underscores
+      .trim();
+
+    if (!cleanedPlaceholder) {
+      cleanedPlaceholder = "this value";
+    }
+
+    return `What is the ${cleanedPlaceholder}?`;
+  }, []);
+
   const handleParsedDocument = useCallback(
     (name: string, html: string, text: string) => {
       setTemplateHtml(html);
       setTemplateText(text);
-      setPlaceholders(extractPlaceholders(text));
+      const extractedPlaceholders = extractPlaceholders(text);
+      setPlaceholders(extractedPlaceholders);
       setDocumentMeta({ name, size: formatBytes(text.length * 2) });
       setLastUpdated(new Date().toLocaleTimeString());
+      setAnswers({});
+      setCurrentPlaceholderIndex(0);
+
+      // Start conversation if placeholders exist
+      if (extractedPlaceholders.length > 0) {
+        setMessages([
+          {
+            role: "assistant",
+            content: `Great! I found ${extractedPlaceholders.length} placeholder${extractedPlaceholders.length === 1 ? "" : "s"} in your document. Let's fill them in one by one.`,
+          },
+          {
+            role: "assistant",
+            content: generateQuestion(extractedPlaceholders[0]),
+          },
+        ]);
+      } else {
+        setMessages([
+          {
+            role: "assistant",
+            content: "I didn't find any placeholders in this document. You can download it as-is or upload a different document.",
+          },
+        ]);
+      }
     },
-    [extractPlaceholders],
+    [extractPlaceholders, generateQuestion],
   );
 
   const parseDocument = useCallback(
@@ -146,13 +220,49 @@ export default function Home() {
     setUploadError(null);
   }, [handleParsedDocument]);
 
+  const handleSubmitAnswer = useCallback(() => {
+    if (!userInput.trim() || currentPlaceholderIndex >= placeholders.length) return;
+
+    const currentPlaceholder = placeholders[currentPlaceholderIndex];
+    const newAnswers = { ...answers, [currentPlaceholder]: userInput.trim() };
+
+    // Add user message
+    const newMessages = [
+      ...messages,
+      { role: "user" as const, content: userInput.trim() },
+    ];
+
+    setAnswers(newAnswers);
+    setUserInput("");
+
+    // Move to next placeholder
+    const nextIndex = currentPlaceholderIndex + 1;
+    setCurrentPlaceholderIndex(nextIndex);
+
+    if (nextIndex < placeholders.length) {
+      // Ask next question
+      newMessages.push({
+        role: "assistant",
+        content: generateQuestion(placeholders[nextIndex]),
+      });
+    } else {
+      // All done
+      newMessages.push({
+        role: "assistant",
+        content: "Perfect! All placeholders have been filled. You can now review the completed document and download it.",
+      });
+    }
+
+    setMessages(newMessages);
+  }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion]);
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 text-slate-900">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6">
         <header className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
             <span>Project status</span>
-            <span className="text-emerald-600">Phase 1: Upload &amp; Parse</span>
+            <span className="text-emerald-600">Phase 3: Conversational Flow</span>
           </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -172,7 +282,7 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="grid gap-8 lg:grid-cols-[minmax(0,360px),1fr]">
+        <section className={`grid gap-8 ${templateHtml ? "lg:grid-cols-[minmax(0,320px),1fr,minmax(0,380px)]" : "lg:grid-cols-[minmax(0,360px),1fr]"}`}>
           <div className="space-y-6">
             <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 shadow-sm">
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -282,12 +392,17 @@ export default function Home() {
               <div className="mt-3 space-y-2 text-sm text-slate-700">
                 {placeholders.length ? (
                   <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50">
-                    {placeholders.map((placeholder) => (
-                      <li key={placeholder} className="flex items-center justify-between px-4 py-2">
-                        <span className="font-mono text-xs text-slate-500">{placeholder}</span>
-                        <span className="text-emerald-600">Pending</span>
-                      </li>
-                    ))}
+                    {placeholders.map((placeholder) => {
+                      const isFilled = answers[placeholder] !== undefined;
+                      return (
+                        <li key={placeholder} className="flex items-center justify-between px-4 py-2">
+                          <span className="font-mono text-xs text-slate-500">{placeholder}</span>
+                          <span className={isFilled ? "text-emerald-600" : "text-amber-600"}>
+                            {isFilled ? "Filled" : "Pending"}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="text-slate-500">Placeholder keys will appear after parsing.</p>
@@ -309,8 +424,8 @@ export default function Home() {
               )}
             </div>
             <div className="mt-6 h-[560px] overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50 p-6 text-base leading-relaxed text-slate-800">
-              {templateHtml ? (
-                <article className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: templateHtml }} />
+              {highlightedHtml ? (
+                <article className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-center text-slate-400">
                   <p className="text-base font-medium">Upload a document to see it here</p>
@@ -319,6 +434,83 @@ export default function Home() {
               )}
             </div>
           </div>
+
+          {templateHtml && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col h-[calc(100vh-200px)] max-h-[800px]">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    Conversational Fill
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {currentPlaceholderIndex < placeholders.length
+                      ? `${currentPlaceholderIndex + 1} of ${placeholders.length}`
+                      : "Complete"}
+                  </p>
+                </div>
+                <div className="text-xs text-slate-400">
+                  {Object.keys(answers).length}/{placeholders.length} filled
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                        message.role === "user"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-100 text-slate-900"
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed">{message.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {currentPlaceholderIndex < placeholders.length && (
+                <div className="border-t border-slate-200 pt-4">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSubmitAnswer();
+                    }}
+                    className="flex gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      placeholder="Type your answer..."
+                      className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!userInput.trim()}
+                      className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Send
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {currentPlaceholderIndex >= placeholders.length && placeholders.length > 0 && (
+                <div className="border-t border-slate-200 pt-4">
+                  <button
+                    type="button"
+                    className="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    Download Completed Document
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </section>
       </div>
     </div>
