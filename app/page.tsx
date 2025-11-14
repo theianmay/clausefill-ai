@@ -404,7 +404,10 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--md-sys-color-surface-container)", color: "var(--md-sys-color-on-surface-variant)" }}>
               <span>Project status</span>
-              <span style={{ color: "var(--md-sys-color-tertiary)" }}>Phase 5: Polished & Ready</span>
+              <span className="flex items-center gap-1" style={{ color: "var(--md-sys-color-success)" }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: "var(--md-sys-color-success)" }}></span>
+                Live
+              </span>
             </div>
             <div className="flex items-center gap-2">
               {templateHtml && (
