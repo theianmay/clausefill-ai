@@ -681,7 +681,7 @@ export default function Home() {
                                 Skip
                               </button>
                             )}
-                            <span style={{ color: isFilled ? "var(--md-sys-color-tertiary)" : "var(--md-sys-color-secondary)" }}>
+                            <span style={{ color: isFilled ? "var(--md-sys-color-success)" : "var(--md-sys-color-secondary)" }}>
                               {isFilled ? "Filled" : isCurrent ? "Current" : "Pending"}
                             </span>
                           </div>
