@@ -235,13 +235,17 @@ export default function Home() {
       const cache: Record<string, string> = {};
       
       // Handle both array and object responses
+      // AI sometimes returns "questions" or "placeholders" as the key
       const questionsList = Array.isArray(data.questions) 
         ? data.questions 
-        : Array.isArray(data) 
-          ? data 
-          : [];
+        : Array.isArray(data.placeholders)
+          ? data.placeholders
+          : Array.isArray(data) 
+            ? data 
+            : [];
       
       if (questionsList.length === 0) {
+        console.error("No questions in response. Data:", data);
         throw new Error("No questions returned from API");
       }
       
