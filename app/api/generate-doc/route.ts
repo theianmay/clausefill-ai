@@ -29,23 +29,68 @@ export async function POST(request: Request) {
       );
     }
 
-    // Perform manual text replacement for all placeholder formats
+    // Word often splits placeholders across <w:t> tags within a paragraph
+    // Strategy: For each paragraph, extract all text, do replacement, rebuild with single <w:t>
     let modifiedXml = documentXml;
+    
     Object.entries(answers as Record<string, string>).forEach(([placeholder, value]) => {
-      // Escape special XML characters in the value
-      const escapedValue = value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&apos;");
-      
-      // Replace the placeholder (it might be split across XML tags)
-      // We need to handle cases where Word splits the text across multiple runs
       const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(escapedPlaceholder, "g");
-      modifiedXml = modifiedXml.replace(regex, escapedValue);
+      
+      // Process each paragraph block
+      modifiedXml = modifiedXml.replace(
+        /(<w:p\b[^>]*>)([\s\S]*?)(<\/w:p>)/g,
+        (fullMatch: string, openTag: string, content: string, closeTag: string) => {
+          // Extract all text from <w:t> tags in this paragraph
+          const textMatches = content.match(/<w:t\b[^>]*>.*?<\/w:t>/g);
+          if (!textMatches) return fullMatch;
+          
+          let plainText = "";
+          textMatches.forEach((tag: string) => {
+            const textContent = tag.replace(/<w:t\b[^>]*>(.*?)<\/w:t>/, "$1");
+            plainText += textContent;
+          });
+          
+          // Check if this paragraph contains our placeholder
+          if (!regex.test(plainText)) {
+            return fullMatch; // No match, return unchanged
+          }
+          
+          console.log(`Found "${placeholder}" in paragraph, replacing with "${value}"`);
+          
+          // Replace placeholder in the plain text
+          const replacedText = plainText.replace(regex, value);
+          
+          // Escape XML special characters in the REPLACED text
+          const escapedText = replacedText
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+          
+          // Strategy: Keep the first <w:r> tag with all its formatting,
+          // but replace ALL <w:t> content with our single replaced text
+          let firstRun = true;
+          const modifiedContent = content.replace(
+            /(<w:r\b[^>]*>)([\s\S]*?)(<\/w:r>)/g,
+            (rMatch: string, rOpen: string, rContent: string, rClose: string) => {
+              if (firstRun) {
+                firstRun = false;
+                // Keep formatting properties but replace text content
+                const cleanedContent = rContent.replace(/<w:t\b[^>]*>.*?<\/w:t>/g, "");
+                // Add our single <w:t> with the fully replaced paragraph text
+                return rOpen + cleanedContent + `<w:t>${escapedText}</w:t>` + rClose;
+              }
+              // Remove subsequent runs that contained parts of the placeholder
+              return "";
+            }
+          );
+          
+          return openTag + modifiedContent + closeTag;
+        }
+      );
     });
+
+    console.log("Replacement complete");
 
     // Update the zip with modified content
     zip.file("word/document.xml", modifiedXml);
