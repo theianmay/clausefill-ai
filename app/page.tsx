@@ -133,39 +133,46 @@ export default function Home() {
     
     // Check if this is a company name field - normalize business entity suffixes
     if (/company|corporation|corp|business|entity|organization|employer/i.test(lowerPlaceholder)) {
-      // Business entity suffix mappings (case-insensitive match, proper case output)
-      const entityMap: Record<string, string> = {
-        'llc': 'LLC',
-        'l.l.c.': 'LLC',
-        'l.l.c': 'LLC',
-        'inc': 'Inc.',
-        'inc.': 'Inc.',
-        'incorporated': 'Inc.',
-        'corp': 'Corp.',
-        'corp.': 'Corp.',
-        'corporation': 'Corporation',
-        'ltd': 'Ltd.',
-        'ltd.': 'Ltd.',
-        'limited': 'Limited',
-        'co': 'Co.',
-        'co.': 'Co.',
-        'company': 'Company',
-        'lp': 'LP',
-        'l.p.': 'LP',
-        'llp': 'LLP',
-        'l.l.p.': 'LLP',
-        'pllc': 'PLLC',
-        'p.l.l.c.': 'PLLC',
-        'pc': 'PC',
-        'p.c.': 'PC'
-      };
-      
-      // Replace entity suffixes with proper formatting
       let normalized = trimmedValue;
-      Object.entries(entityMap).forEach(([pattern, replacement]) => {
-        // Match the pattern at the end of the string (case-insensitive)
-        const regex = new RegExp(`\\b${pattern.replace(/\./g, '\\.')}\\b$`, 'i');
-        normalized = normalized.replace(regex, replacement);
+      
+      // Business entity suffix mappings (order matters - check longer patterns first)
+      const entityReplacements = [
+        // Full words first
+        { pattern: /\bincorporated\b/gi, replacement: 'Inc.' },
+        { pattern: /\bcorporation\b/gi, replacement: 'Corporation' },
+        { pattern: /\blimited\b/gi, replacement: 'Limited' },
+        { pattern: /\bcompany\b/gi, replacement: 'Company' },
+        
+        // Abbreviations with periods
+        { pattern: /\bl\.l\.c\./gi, replacement: 'LLC' },
+        { pattern: /\bl\.l\.c\b/gi, replacement: 'LLC' },
+        { pattern: /\bp\.l\.l\.c\./gi, replacement: 'PLLC' },
+        { pattern: /\bp\.l\.l\.c\b/gi, replacement: 'PLLC' },
+        { pattern: /\bl\.l\.p\./gi, replacement: 'LLP' },
+        { pattern: /\bl\.l\.p\b/gi, replacement: 'LLP' },
+        { pattern: /\bl\.p\./gi, replacement: 'LP' },
+        { pattern: /\bl\.p\b/gi, replacement: 'LP' },
+        { pattern: /\bp\.c\./gi, replacement: 'PC' },
+        { pattern: /\bp\.c\b/gi, replacement: 'PC' },
+        { pattern: /\binc\./gi, replacement: 'Inc.' },
+        { pattern: /\bcorp\./gi, replacement: 'Corp.' },
+        { pattern: /\bltd\./gi, replacement: 'Ltd.' },
+        { pattern: /\bco\./gi, replacement: 'Co.' },
+        
+        // Abbreviations without periods (must be at word boundary at end)
+        { pattern: /\bllc$/gi, replacement: 'LLC' },
+        { pattern: /\bpllc$/gi, replacement: 'PLLC' },
+        { pattern: /\bllp$/gi, replacement: 'LLP' },
+        { pattern: /\blp$/gi, replacement: 'LP' },
+        { pattern: /\bpc$/gi, replacement: 'PC' },
+        { pattern: /\binc$/gi, replacement: 'Inc.' },
+        { pattern: /\bcorp$/gi, replacement: 'Corp.' },
+        { pattern: /\bltd$/gi, replacement: 'Ltd.' },
+      ];
+      
+      // Apply all replacements
+      entityReplacements.forEach(({ pattern, replacement }) => {
+        normalized = normalized.replace(pattern, replacement);
       });
       
       return normalized;
