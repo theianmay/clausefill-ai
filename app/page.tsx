@@ -232,15 +232,27 @@ export default function Home() {
     if (!userInput.trim() || currentPlaceholderIndex >= placeholders.length) return;
 
     const currentPlaceholder = placeholders[currentPlaceholderIndex];
-    const newAnswers = { ...answers, [currentPlaceholder]: userInput.trim() };
-
+    const isSkip = userInput.trim().toLowerCase() === "skip";
+    
     // Add user message
     const newMessages = [
       ...messages,
       { role: "user" as const, content: userInput.trim() },
     ];
 
-    setAnswers(newAnswers);
+    let newAnswers = answers;
+    if (!isSkip) {
+      // Only save answer if not skipping
+      newAnswers = { ...answers, [currentPlaceholder]: userInput.trim() };
+      setAnswers(newAnswers);
+    } else {
+      // Acknowledge skip
+      newMessages.push({
+        role: "assistant",
+        content: `Skipped "${currentPlaceholder}". Moving to the next one.`,
+      });
+    }
+
     setUserInput("");
 
     // Move to next placeholder
@@ -255,14 +267,50 @@ export default function Home() {
       });
     } else {
       // All done
+      const filledCount = Object.keys(newAnswers).length;
       newMessages.push({
         role: "assistant",
-        content: "Perfect! All placeholders have been filled. You can now review the completed document and download it.",
+        content: `Done! I've filled ${filledCount} of ${placeholders.length} placeholders. You can now review the completed document and download it.`,
       });
     }
 
     setMessages(newMessages);
   }, [userInput, currentPlaceholderIndex, placeholders, answers, messages, generateQuestion]);
+
+  const handleSkipPlaceholder = useCallback((placeholderToSkip: string) => {
+    const indexToSkip = placeholders.indexOf(placeholderToSkip);
+    if (indexToSkip === -1 || indexToSkip !== currentPlaceholderIndex) return;
+
+    // Add system message about skip
+    const newMessages = [
+      ...messages,
+      {
+        role: "assistant" as const,
+        content: `Skipped "${placeholderToSkip}". Moving to the next one.`,
+      },
+    ];
+
+    // Move to next placeholder
+    const nextIndex = currentPlaceholderIndex + 1;
+    setCurrentPlaceholderIndex(nextIndex);
+
+    if (nextIndex < placeholders.length) {
+      // Ask next question
+      newMessages.push({
+        role: "assistant",
+        content: generateQuestion(placeholders[nextIndex]),
+      });
+    } else {
+      // All done
+      const filledCount = Object.keys(answers).length;
+      newMessages.push({
+        role: "assistant",
+        content: `Done! I've filled ${filledCount} of ${placeholders.length} placeholders. You can now review the completed document and download it.`,
+      });
+    }
+
+    setMessages(newMessages);
+  }, [placeholders, currentPlaceholderIndex, messages, answers, generateQuestion]);
 
   const handleDownload = useCallback(async () => {
     setIsDownloading(true);
@@ -450,14 +498,26 @@ export default function Home() {
               <div className="mt-3 space-y-2 text-sm" style={{ color: "var(--md-sys-color-on-surface)" }}>
                 {placeholders.length ? (
                   <ul className="divide-y rounded-2xl border" style={{ background: "var(--md-sys-color-surface-container-high)", borderColor: "var(--md-sys-color-outline-variant)" }}>
-                    {placeholders.map((placeholder) => {
+                    {placeholders.map((placeholder, index) => {
                       const isFilled = answers[placeholder] !== undefined;
+                      const isCurrent = index === currentPlaceholderIndex;
                       return (
-                        <li key={placeholder} className="flex items-center justify-between px-4 py-2">
-                          <span className="font-mono text-xs" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>{placeholder}</span>
-                          <span style={{ color: isFilled ? "var(--md-sys-color-tertiary)" : "var(--md-sys-color-secondary)" }}>
-                            {isFilled ? "Filled" : "Pending"}
-                          </span>
+                        <li key={placeholder} className="flex items-center justify-between px-4 py-2 gap-2">
+                          <span className="font-mono text-xs flex-1" style={{ color: "var(--md-sys-color-on-surface-variant)" }}>{placeholder}</span>
+                          <div className="flex items-center gap-2">
+                            {isCurrent && !isFilled && (
+                              <button
+                                onClick={() => handleSkipPlaceholder(placeholder)}
+                                className="text-xs px-2 py-1 rounded transition"
+                                style={{ background: "var(--md-sys-color-error-container)", color: "var(--md-sys-color-on-error-container)" }}
+                              >
+                                Skip
+                              </button>
+                            )}
+                            <span style={{ color: isFilled ? "var(--md-sys-color-tertiary)" : "var(--md-sys-color-secondary)" }}>
+                              {isFilled ? "Filled" : isCurrent ? "Current" : "Pending"}
+                            </span>
+                          </div>
                         </li>
                       );
                     })}
@@ -544,7 +604,7 @@ export default function Home() {
                       type="text"
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
-                      placeholder="Type your answer..."
+                      placeholder="Type your answer... (or 'skip' to skip)"
                       autoFocus
                       className="flex-1 rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2"
                       style={{ background: "var(--md-sys-color-surface-container-high)", borderColor: "var(--md-sys-color-outline)", color: "var(--md-sys-color-on-surface)" }}

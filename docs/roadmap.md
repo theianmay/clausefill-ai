@@ -102,7 +102,11 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
   - [x] Privacy note (no data stored).
 - [x] Loading states (download button, parsing indicator).
 - [x] Keyboard accessibility (Enter to submit, autofocus).
-- [ ] Smoke test full flow with sample documents.
+- [x] **UX IMPROVEMENTS (Post-Testing):**
+  - [x] Auto-scroll chat messages as conversation progresses.
+  - [x] Change download button to success green (was red/tertiary).
+  - [x] Add skip placeholder functionality (type 'skip' or click button in sidebar).
+- [x] Smoke test full flow with sample documents.
 - [x] **DEPLOYMENT:** Deploy to Vercel for public URL access (https://clausefill-ai.vercel.app/).
 - [ ] **REAL-WORLD TEST:** Test with actual legal documents (NDA, employment agreement, etc.).
 
