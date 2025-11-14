@@ -28,13 +28,17 @@ This roadmap is focused on **execution** and is meant to be extended as the proj
 
 ## Phase 2 – Placeholder Detection & Highlighting
 
-- [ ] Implement regex-based detection of placeholder patterns, including:
-  - [ ] Square-bracketed tokens like `[Company Name]`, `[Investor Name]`, `[Date of Safe]`.
-  - [ ] Bracketed blanks like `$[_____________]`.
-  - [ ] (Optional) curly-braced tokens like `{company_name}`.
-- [ ] Deduplicate placeholders and store them as a list of keys.
-- [ ] Highlight placeholders in the preview (e.g. colored spans).
-- [ ] Show a sidebar or panel listing all detected placeholders and their fill status.
+- [x] Implement regex-based detection of placeholder patterns, including:
+  - [x] Square-bracketed tokens like `[Company Name]`, `[Investor Name]`, `[Date of Safe]`.
+  - [x] Bracketed blanks like `$[_____________]`.
+  - [x] (Optional) curly-braced tokens like `{company_name}`.
+- [x] Deduplicate placeholders and store them as a list of keys.
+- [ ] Highlight placeholders in the preview (e.g. colored spans with background color).
+- [x] Show a sidebar or panel listing all detected placeholders and their fill status.
+- [ ] **CRITICAL FOR REAL DOCS:** Add support for additional common patterns:
+  - [ ] Standalone underscores: `_________` (minimum 3+ underscores)
+  - [ ] Empty brackets: `[ ]` or `[  ]`
+  - [ ] Placeholder indicators: `[TBD]`, `[INSERT]`, `[FILL IN]`
 
 ---
 
@@ -70,9 +74,11 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
 - [ ] Implement `/api/generate-doc`:
   - [ ] Accept original template text and the `answers` map.
   - [ ] Replace placeholders with the corresponding values, leaving unfilled ones visibly marked.
-  - [ ] Generate a `.docx` (or `.txt` fallback) and return as downloadable file.
+  - [ ] **CRITICAL:** Use `docxtemplater` or similar to preserve formatting (not just text replacement).
+  - [ ] Generate a `.docx` and return as downloadable file.
 - [ ] Add a "Download" button on the UI that calls this endpoint.
 - [ ] Use a simple filename convention like `completed-document-{timestamp}.docx`.
+- [ ] **TESTING:** Verify with real legal documents that formatting is preserved.
 
 ---
 
@@ -82,9 +88,43 @@ Implement a **scripted, state-driven chat experience** that walks through placeh
   - [ ] Invalid file type.
   - [ ] Parsing failures.
   - [ ] No placeholders detected.
+  - [ ] Large files (>5MB) with helpful guidance.
 - [ ] Responsive layout with MD3 color scheme and basic accessibility checks.
 - [ ] Copy polish (helper text around upload, placeholders, and conversation).
+- [ ] **USER GUIDANCE:** Add help section explaining:
+  - [ ] Supported placeholder formats with examples.
+  - [ ] What to expect from the conversational flow.
+  - [ ] Tips for preparing documents.
 - [ ] Smoke test full flow with sample documents.
+- [ ] **DEPLOYMENT:** Deploy to Vercel/Netlify for public URL access.
+- [ ] **REAL-WORLD TEST:** Test with actual legal documents (NDA, employment agreement, etc.).
+
+---
+
+## Phase 6 – Pre-Launch Checklist (Real-World Readiness)
+
+Before sharing with unknown testers:
+
+- [ ] **Landing page clarity:**
+  - [ ] Clear value proposition visible immediately.
+  - [ ] Instructions on how to use the tool.
+  - [ ] Example placeholder formats shown.
+- [ ] **Sample documents:**
+  - [ ] Provide 2-3 downloadable sample legal documents (NDA, SAFE, employment offer).
+  - [ ] Each with clear placeholder formats.
+- [ ] **Error recovery:**
+  - [ ] If no placeholders detected, suggest manual placeholder format.
+  - [ ] If parsing fails, provide clear next steps.
+- [ ] **Performance:**
+  - [ ] Test with 10+ page documents.
+  - [ ] Ensure parsing completes within 5 seconds.
+- [ ] **Cross-browser testing:**
+  - [ ] Chrome, Firefox, Safari.
+  - [ ] Mobile responsive.
+- [ ] **Analytics (optional):**
+  - [ ] Track upload success rate.
+  - [ ] Track placeholder detection rate.
+  - [ ] Track completion rate.
 
 ---
 
