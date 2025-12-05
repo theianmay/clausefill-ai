@@ -1,3 +1,5 @@
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Next.js](https://img.shields.io/badge/next.js-000000?style=flat&logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org/) [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/) [![OpenAI API](https://img.shields.io/badge/OpenAI_API-00A67E?style=flat&logo=openai&logoColor=white)](https://openai.com/docs/api-reference)
+
 # Clausefill-AI
 
 **AI-powered conversational document filling for legal templates.**
